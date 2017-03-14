@@ -1,0 +1,657 @@
+\documentclass{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+
+% Wide page
+\usepackage{fullpage}
+
+% Maths
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs} % turn off numbering of unreferenced equations
+\usepackage{amsmath,amssymb,amsthm}
+
+% Advanced enumerate
+\usepackage{enumitem}
+
+% Multiple columns
+\usepackage{multicol}
+\setlength\columnsep{-3em} % default columnsep for all pages
+
+% Tables
+\usepackage{diagbox} % Diagonal line in table header
+\renewcommand{\arraystretch}{1.2} % More space between table rows
+
+% Redefine some useful commands
+\renewcommand{\epsilon}{\varepsilon} % nice-looking epsilon
+
+% My operators
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\S}{\mathbb{S}}
+\DeclareMathOperator{\Exists}{\exists}
+\DeclareMathOperator{\Forall}{\forall}
+\DeclareMathOperator*{\Tr}{Tr}
+\DeclareMathOperator*{\Det}{Det}
+\DeclareMathOperator*{\Diag}{Diag}
+\DeclareMathOperator*{\Rank}{Rank}
+\DeclareMathOperator*{\Dom}{Dom}
+
+\title{\vspace{-2em}Методы оптимизации (ФКН ВШЭ, 2017). Домашняя работа 2.\\Тема: Производные и условия оптимальности.}
+\author{Срок сдачи: 31 января 2017 (на семинаре)}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{enumerate}[label=\textbf{\arabic*}, leftmargin=0em]
+
+\item Для каждой из следующих функций $f$ (заданных на множестве $\Dom f$) найти производную $Df(x)[\Delta x]$ (для произвольного $x \in \Dom f$ и произвольного достаточно малого $\Delta x$) \underline{по определению}:
+\begin{enumerate}
+\item $\displaystyle f(X) := X^T, \quad \Dom f := \R^{m \times n}$.
+
+Решение:
+
+$$
+Df(x)[\Delta f(x)] = f(x + h) - f(x)
+$$
+
+$$
+Df(x)[\Delta X] = (X + \Delta X)^T - X^T =  \Delta X^T
+$$
+
+$$
+d f(x)[\Delta x] = \lim_{t\to 0} \frac{t \Delta X^T)}{t} = \Delta X^T
+$$
+
+
+\item $\displaystyle f(X) := \| X \|_F^2, \quad \Dom f := \R^{m \times n}$.
+
+Решение:
+
+$$
+Df(x)[\Delta X] = \| X + \Delta X\|_F^2  - \| X \|_F^2 = Tr((X + \Delta X)(X + \Delta X)^T) - Tr(XX^T) =
+$$
+
+$$
+= Tr(XX^T + X(\Delta X)^T + \Delta X X^T + \Delta X \Delta X^T) - Tr(XX^T) = Tr(X(\Delta X)^T + \Delta X X^T + \Delta X \Delta X^T) =
+$$
+
+$$
+= Tr(X(\Delta X)^T) + Tr(\Delta X X^T + \Delta X \Delta X^T) = Tr(X(\Delta X)^T) + Tr(X \Delta X^T + \Delta X \Delta X^T) =
+$$
+$$
+=  Tr((X + X) \Delta X^T + \Delta X \Delta X^T) = Tr(2X(\Delta X^T) + \Delta X \Delta X^T)
+$$
+
+$$
+d f(x)[\Delta x] = \lim_{t\to 0} \frac{Tr(2X(\Delta X^T) + t \Delta X t\Delta X^T)}{t} = Tr(2X(\Delta X^T))
+$$
+
+\item $\displaystyle f(x) := A x x^T A^T, \quad \Dom f := \R^n$.\hfill[$A \in \R^{n \times n}$]
+
+Решение:
+
+$$
+Df(x)[\Delta X] =  (A (x + \Delta x) (x + \Delta x)^T A^T) - (A x x^T A^T) = (Ax + A\Delta x) (x^TA^T + \Delta x^T A^T) - Axx^TA^T =
+$$
+
+$$
+= AxaA^T + Ax \Delta x^T A^T  + A\Delta xx^TA^T + A\Delta x\Delta x^T A^T - Axx^TA^T =
+$$
+
+$$
+= Ax \Delta x^T A^T  + A\Delta x x^T A^T + A\Delta x \Delta x^T A^T =
+$$
+
+$$
+d f(x)[\Delta x] = \lim_{t\to 0} \frac{Ax t\Delta x^T A^T  + A t\Delta x x^T A^T + At \Delta x t\Delta x^T A^T}{t} = Ax \Delta x^T A^T  + A \Delta x x^T A^T
+$$
+
+\end{enumerate}
+
+\item Для каждой из следующих функций $f$ (заданных на множестве $\Dom f$) найти первые и вторые производные $Df(x)[\Delta x]$ и $D^2f(x)[\Delta x_1, \Delta x_2]$ (для произвольного $x \in \Dom f$ и произвольных достаточно малых $\Delta x, \Delta x_1, \Delta x_2)$. Для вещественнозначных функций дополнительно вычислить градиент $\nabla f(x)$ и матрицу Гессе $\nabla^2 f(x)$ (только для функций векторного аргумента). Для векторнозначных функций векторного аргумента дополнительно вычислить матрицу Якоби $J_f(x)$.
+\begin{enumerate}
+\item $\displaystyle f(X) := \Tr(A X^{-1} B), \quad \Dom f := \{ X \in \R^{n \times n} : \Det(X) \neq 0 \}$.\hfill[$A, B \in \R^{n \times n}$]
+
+Решение:
+
+$$
+df(x)[H] = d(\Tr(A X^{-1} B))[H] = Tr(d(AX^{-1}B)) = Tr(Ad(X^{-1})B) =
+$$
+
+$$
+= -Tr(AX^{-1}HX^{-1}B) = -Tr(X^{-1}BAX^{-1}H)
+$$
+
+$$
+\nabla f = X^{-1}BAX^{-1}
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = d(-Tr(X^{-1}BAX^{-1}H)) = -Tr(d(X^{-1}BA  X^{-1}H))) =
+$$
+
+$$
+= -Tr(d(X^{-1})BAX^{-1}H + X^{-1}BAd(X^{-1})H) =
+$$
+
+$$
+= Tr(X^{-1}H_1X^{-1}BAX^{-1}H + X^{-1}BAX^{-1}H_1X^{-1}H))
+$$
+
+\item $\displaystyle f(x) := \frac{x^T A x}{x^T x}, \quad \Dom f := \R^n \setminus \{0\}$.\hfill[$A \in \S^{n \times n}$]
+
+Решение:
+
+$$
+df(x)[H] = d(\frac{x^T A x}{x^T x}) = \frac{d(x^T A x) x^T x - x^T A x d(x^T x)}{(x^T x)^2} =
+$$
+
+$$
+= \frac{2x^TAh x^T x - 2x^T A x x^T h}{(x^T x)^2} = 2\frac{x^Tx x^TAh - x^T A x x^T h}{(x^T x)^2} = 2\frac{x^T(x x^TA - A x x^T)h}{(x^T x)^2}
+$$
+
+$$
+\nabla f = 2\frac{x^T(x x^TA - A x x^T)}{(x^T x)^2}
+$$
+
+
+
+$$
+d(x^Tx x^TA - x^T A x x^T) = d(x^TAx^Tx - x^T A x x^T) = d(x^T)Ax^Tx + x^TAd(x^Tx) - d(x^T) A x x^T - x^TAd(xx^T) =
+$$
+
+$$
+= h^TAx^Tx + x^TA2x^Th - h^T A x x^T - x^TA(hx^T + xh^T) = h^TA(x^Tx - x x^T) - x^TA(hx^T + xh^T - 2x^Th )
+$$
+
+$$
+d((x^T x)^2) = 2(x^Tx)d(x^Tx) = 4x^Txx^Th
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = 2d\left(\frac{x^T(x x^TA - A x x^T x)h}{(x^T x)^2}\right) =
+$$
+
+$$
+= 2\left(\frac{d(x^T(x x^TA - A x x^T x)h)(x^T x)^2 - (x^T(x x^TA - A x x^T x)h)d((x^T x)^2)}{(x^T x)^4}\right)
+$$
+
+Если я это подставлю мой мозг взорвется.
+
+\item $\displaystyle f(X) := a^T X^{-1} a, \quad \Dom f := \{ X \in \R^{n \times n} : \Det(X) \neq 0 \}$.\hfill[$a \in \R^n$]
+
+Решение:
+$$
+df(x)[H] = d(a^T X^{-1} a) = d(Tr(a^T X^{-1} a))= Tr(a^T d(X^{-1}) a) = Tr(a^T X^{-1} a) = -Tr(a^T X^{-1}HX^{-1} a)
+$$
+
+$$
+\nabla = -X^{-1}aa^TX{-1}
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = -d(Tr(a^T X^{-1}HX^{-1} a)) = -Tr(d(X^{-1}aa^TX{-1}H)) =
+$$
+$$
+=  -Tr(d(X^{-1})aa^TX^{-1}H + X^{-1}aa^Td(X^{-1})H) =
+$$
+
+$$
+= -Tr(X^{-1}H_1X^{-1}aa^TX^{-1}H + X^{-1}aa^TX^{-1}H_1X^{-1}H) =
+$$
+
+$$
+= -Tr((X^{-1}H_1X^{-1}aa^TX^{-1} + X^{-1}aa^TX^{-1}H_1X^{-1})H)
+$$
+
+\item $\displaystyle f(X) := \frac{1}{2} \| A X - B \|_F^2, \quad \Dom f := \R^{k \times n}$.\hfill[$A \in \R^{m \times k}$, $B \in \R^{m \times n}$]
+Решение:
+
+$$
+df(x)[H] = 1/2 d(\| A X - B \|_F^2) = 1/2  Tr(d((A X - B)(X^TA^T - B^T)))) = 1/2 Tr(d((A X - B)(X^TA^T - B^T)))) =
+$$
+
+$$
+= 1/2 Tr(d(AXX^TA^T - AXB^T - BX^TA^T + BB^T)) = 1/2 Tr(d(AXX^TA^T) - AHB^T - BH^TA^T) =
+$$
+$$
+= 1/2 Tr(AHX^TA^T + AXH^TA^T - AHB^T - BH^TA^T)=
+$$
+
+$$
+= 1/2 Tr(X^TA^TAH + H^TA^TAX- B^TAH - H^TA^TB) =
+$$
+$$
+= 1/2 Tr((X^TA^T - B^T)AH +H^TA^T (AX - B)) = Tr((X^TA^T - B^T)AH)
+$$
+
+$$
+\nabla f = (X^TA^T - B^T)A
+$$
+
+
+$$
+d^2 f(x)[H_1, H_2] = d(Tr((X^TA^T - B^T)AH)) = Tr(d((X^TA^T - B^T)AH))) = Tr(d(X^TA^TAH)) = Tr(H_1^TA^TAH)
+$$
+
+
+$$
+\nabla^2 f = A^TA
+$$
+
+\item $\displaystyle f(X) := \frac{1}{2} \| X A - B \|_F^2, \quad \Dom f := \R^{m \times k}$.\hfill[$A \in \R^{k \times n}$, $B \in \R^{m \times n}$]
+
+Решение:
+
+$$
+df(x)[H] = 1/2 d(\| XA - B \|_F^2) = 1/2  Tr(d((XA - B)(A^TA^T - B^T)))) = 1/2 Tr(d((XA - B)(A^TX^T - B^T)))) =
+$$
+
+$$
+= 1/2 Tr(d( (XAA^TX^T - XAB^T - BA^TX^T + BB^T)))) = 1/2 Tr(( d(XAA^TX^T) - HAB^T - BA^TH^T))) =
+$$
+
+$$
+= 1/2 Tr(HAA^TX^T + XAA^TH^T - HAB^T - BA^TH^T)) = 1/2 Tr(HA(A^TX^T  - B^T) + (XA - B)A^TH^T) =
+$$
+
+
+$$
+= Tr(HA(A^TX^T - B^T))
+$$
+
+$$
+\nabla f = A(A^TX^T - B^T)
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = d(Tr(A(A^TX^T - B^T)H)) = Tr(AA^TH_1^TH) = Tr(H_1^THAA^T)
+$$
+
+
+\item $\displaystyle f(x) := \frac{1}{2} \| x x^T - A \|_F^2, \quad \Dom f := \R^n$.\hfill[$A \in \S^n$]
+
+Решение:
+
+$$
+df(x)[H] = 1/2 d(Tr((x x^T - A)(x x^T - A)^T)) = 1/2 d(Tr((x x^T - A)(x x^T - A^T))) = 1/2 d(Tr((x x^T - A)^2)) =
+$$
+
+$$
+= Tr((x x^T - A)d(x x^T - A)) = Tr((x x^T - A)(h x^T + xh^T)) = Tr(x x^T h x^T + x x^T x h^T - A h x^T - A xh^T) =
+$$
+
+$$
+= Tr((x x^T- A )h x^T  + (x x^T - A)xh^T) = Tr((x x^T- A )h x^T  + hx^T(x x^T - A)) =
+$$
+
+$$
+= 2Tr(x^T (x x^T - A)h)
+$$
+
+
+$$
+\nabla f = 2x^T (x x^T - A)
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = d(2Tr(x^T (x x^T - A)h)) = 2d(Tr(x^T x x^T - x^TA)h)) = 2Tr((2x^Th_1 x^T + x^Txh_1^T - h_1^TA)h)
+$$
+
+$$
+= 2Tr((x^T2x^Th_1+ h_1^Tx^Tx - h_1^TA)h) = 2Tr((h_1^T(2x^2T+ x^Tx -A)h))
+$$
+
+$$
+\nabla^2 f  = 2(2x^2T+ x^Tx -A)
+$$
+
+
+
+\item $\displaystyle f(x) := \ln\left(\sum\limits_{i=1}^n \exp(a_i^T x) \right), \quad \Dom f := \R^n$.\hfill[$a_i \in \R^n$ для всех $1 \leq i \leq n$]
+\item $\displaystyle f(X) := \arctan(X a), \quad \Dom f := \R^{m \times n}$.\hfill[$a \in \R^n$, $\arctan$ вычисляется поэлементно]
+\item $\displaystyle f(x) := (x^T x)^{x^T x}, \quad \Dom f := \R^n \setminus \{0\}$.
+\item $\displaystyle f(x) := (f_i(x))_{i=1}^n, $ где $\displaystyle f_i(x) := \frac{\exp(a_i^T x)}{\sum\limits_{j=1}^n \exp(a_j^T x)}, \quad \Dom f = \R^n$.\hfill[$a_i \in \R^n$ для всех $1 \leq i \leq n$]
+
+Решение
+
+$$
+df(x) = d(\frac{\exp(a_i^T x)}{\sum\limits_{j=1}^n \exp(a_j^T x)}) = \frac{d(\exp(a_i^T x)) \sum\limits_{j=1}^n \exp(a_j^T x) - \exp(a_i^T x) d(\sum\limits_{j=1}^n \exp(a_j^T x)))}{ (\sum\limits_{j=1}^n \exp(a_j^T x))^2} =
+$$
+
+$$
+= \frac{\exp(a_i^T x)a_i^Th\sum\limits_{j=1}^n \exp(a_j^T x) - \exp(a_i^T x) \sum\limits_{j=1}^n \exp(a_j^T x)a_j^Th)}{ (\sum\limits_{j=1}^n \exp(a_j^T x))^2}
+$$
+
+
+$$
+J_x = \frac{\exp(a_i^T x)a_i^T\sum\limits_{j=1}^n \exp(a_j^T x) - \exp(a_i^T x) \sum\limits_{j=1}^n \exp(a_j^T x)a_j^T)}{ (\sum\limits_{j=1}^n \exp(a_j^T x))^2}
+$$
+
+\item $\displaystyle f(x) := \|\left(A + x I_n \right)^{-1} b \|_2^2, \quad \Dom f := \R_{++}$. \hfill[$A \in \S^n_+$, $b \in \R^n$]
+
+Решение:
+
+$$
+df(x)[H] = d(((A + x I_n )^{-1} b)^T((A + x I_n )^{-1} b)) =
+$$
+
+$$
+= d((b^T(A + xI_n)^{-1})((A + x I_n)^{-1} b)) = d((b^T(A + xI_n)^{-2}b)) =
+$$
+
+$$
+= -2b^T(A + xI_n)^{-3}bh
+$$
+
+
+$$
+\nabla f = 2b^T(A + xI_n)^{-3}b
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = d(-2b^T(A + xI_n)^{-3}bh) = 6(b^T(A + xI_n)^{-4}b)hh_1
+$$
+
+\end{enumerate}
+
+\item Для каждой из следующих функций $f : \Dom f \rightarrow \R$ найти все точки стационарности и определить их тип (локальный минимум/максимум, седловая точка). В каких точках достигается глобальный минимум?
+\begin{enumerate}
+\item $\displaystyle f(x) := 2 x_1^2 + x_2^2 (x_2^2 - 2), \quad \Dom f := \R^2$.
+
+Решение:
+
+$$
+\nabla f(x_1, x_2)  =
+\begin{bmatrix}
+4x_1\\
+4x_2^3 - 4x_2\\
+\end{bmatrix}
+$$
+
+
+$$
+\nabla^2 f(x_1, x_2)  =
+\begin{bmatrix}
+4 & 0\\
+0 & 12x_2^2 - 4\\
+\end{bmatrix}
+$$
+
+Стационарные точки:
+$$
+(0, 0), (0, 1), (0, -1)
+$$
+
+Точка $(0,0)$ седловая потому что матрица Гессе не определенная.
+$$
+\nabla^2 f(x_1, x_2)  =
+\begin{bmatrix}
+4 & 0\\
+0 & -1\\
+\end{bmatrix}
+$$
+
+Точки $(0,\pm1)$ -- минимум потому что матрица Гессе положительно определенная. И в этих точках достигается глобальный минимум.
+$$
+\nabla^2 f(x_1, x_2)  =
+\begin{bmatrix}
+4 & 0\\
+0 & 8\\
+\end{bmatrix}
+$$
+
+
+\item $\displaystyle f(x) := (1 - x_1)^2 + 100(x_2 - x_1^2)^2, \quad \Dom f := \R^2$.
+
+Решение:
+
+$$
+\nabla f(x_1, x_2)  =
+\begin{bmatrix}
+-2 + 2x_1 - 400x_2x_1 + 400x_1^3\\
+200x_2 - 200x_1^2 \\
+\end{bmatrix}
+$$
+
+
+$$
+\nabla^2 f(x_1, x_2)  =
+\begin{bmatrix}
+2 - 400x_2 + 1200x_1^2, -400x_1 \\
+-400x_1 & 200\\
+\end{bmatrix}
+$$
+
+Стационарные точки:
+$$
+(1, 1)
+$$
+
+iТочки $(1, 1)$ --седловая потому что матрица Гессе положительнотельно определенная.
+$$
+\nabla^2 f(x_1, x_2)  =
+\begin{bmatrix}
+802 & -400\\
+-400 & 200\\
+\end{bmatrix}
+$$
+
+
+\item $\displaystyle f(x) := \frac{1}{2} x^T A x - b^T x, \quad \Dom f := \R^n$.\hfill[$A \in \S^n$, $b \in \R^n$]
+
+$$
+d f(x) = d(\frac{1}{2} x^T A x - b^T x) = (x^TAh - b^Th) = (x^TA - b^T)h
+$$
+
+$$
+d^2 f(x) = d((x^TA - b^T)h) = h_1^TAh
+$$
+
+Матрица Гессе равна $A$. При условии что $detA \neq 0$:
+
+$$
+x^TA - b^T = 0
+$$
+
+$$
+x^TA = b^T
+$$
+
+$$
+x = A^{-1}b
+$$
+
+Рассмотрим  $a = A^{-1}b$ при условии что $detA \neq 0$ в зависимости от вида матрицы A данное решение может быть максимумом минимумом или седловой точкой.
+
+
+\item $\displaystyle f(x) := \frac{x^T A x}{x^T x}, \quad \Dom f := \R^n \setminus \{0\}$.\hfill[$A \in \S^n$]
+
+$$
+df(x)[H] = 2\frac{x^T(x x^TA - A x x^T)h}{(x^T x)^2}
+$$
+
+$$
+x^T(x x^TA - A x x^T) = 0
+$$
+
+$$
+x^T x x^T A = x^T A x x^T
+$$
+
+
+$$
+x x^T x x^T A = xx^T A x x^T
+$$
+
+$$
+xx^T = c
+$$
+
+$$
+ccA = cAc
+$$
+
+$$
+cA = Ac
+$$
+
+
+\end{enumerate}
+
+\item Для каждой из следующих задач оптимизации найти ее множество решений и оптимальное значение целевой функции:
+\begin{enumerate}
+\item $\displaystyle\min_{x \in \R^n} c^T x$.\hfill[$c \in \R^n$]
+
+Решение:
+
+$$
+d f(x) = d(c^Tx) = c^Tdx
+$$
+
+При c = 0  все точки стацоинарные так как функция обращается в константу и тогда нет минимума.
+
+При $c \neq 0$ минимум в $-\infty$
+
+\item $\displaystyle\min_{x \in \R^n} \left\{ \frac{1}{2} x^T A x - b^T x \right\}$.\hfill[$A \in \S^n_{++}$, $b \in \R^n$]
+
+Решение:
+
+$$
+df(x) =  d(\frac{1}{2} x^T A x - b^T x) = (x^TAh - b^Th) = (x^TA - b^T)h
+$$
+
+$$
+d^2 f(x) = d((x^TA - b^T)h) = h_1^TAh
+$$
+
+Матрица Гессе равна $A$
+$$
+x = A^{-1}b
+$$
+
+Рассмотрим  $a = A^{-1}b$  так как A -- положительно определенная -- данное решение минимумом.
+
+Оптимальное значение целевой функции:
+
+$$
+(1/2A^{-1}b)^T A A^{-1}b - b^T A^{-1}b = (1/2A^{-1}b)^Tb - b^T A^{-1}b = 1/2b^TA^{-1}b - b^TA^{-1}b =  -1/2 b^TA^{-1}b
+$$
+
+\item $\displaystyle \min_{x \in \R^n} |a^T x - \beta|$.\hfill[$a \in \R^n$, $\beta \in \R$]
+
+Решение:
+
+При $a^Tx \beta$ значение функции 0 -- меньше оно и быть не может -- значит ее оптимаоное значение 0.  $a^Tx \beta$ -- x - гиперплоскость заданная n-1 точкой $(0,..,\beta/a[i], 0,00)$
+
+\item $\displaystyle \min_{x \in \R^n} \left\{ c^T x + \frac{\sigma}{3} \|x \|_2^3 \right\}$.\hfill[$c \in \R^n$, $\sigma > 0$]
+
+Решение:
+
+$$
+d f(x) = d(c^T x + \frac{\sigma}{3} \|x \|_2^3 ) = d(c^T x + \frac{\sigma}{3} (x^Tx)^{3/2}) = c^Th + \sigma (x^Tx)^{1/2} x^Th
+$$
+
+$$
+d^2 f(x) = c^Tdx + \sigma (x^Tx)^{1/2} x^T = 0
+$$
+
+$$
+c = - \sigma x (x^Tx)^{1/2}
+$$
+
+$$
+\frac{-c}{\sigma (x^Tx)^{1/2}} =  x
+$$
+
+$$
+d f(x) = \frac{c^T-c}{\sigma (x^Tx)^{1/2}} + \frac{\sigma}{3} \|\frac{-c}{\sigma (x^Tx)^{1/2}}\|_2^3
+$$
+
+
+$$
+d f(x) = \frac{c^T-c}{\sigma (x^Tx)^{1/2}} + \frac{\sigma^{-1/2}}{3} \|\frac{-c}{(x^Tx)^{1/2}}\|_2^3
+$$
+
+$$
+a  = \frac{-1}{\sigma (x^Tx)^{1/2}}
+$$
+
+$$
+d f(x) = d(c^Tca + \frac{\sigma}{3}\|ca\|_2^3) = c^Tc da + \frac{\sigma}{3} \|ca\|^{1/2}ac^Tcda = 0
+$$
+
+$$
+\frac{||c||}{\sigma x^Tx} = 1
+$$
+
+$$
+a = \frac{-1}{(\sigma||c||)^{1/2}}
+$$
+
+
+$$
+<x,x> = \|c\|/\sigma
+$$
+\item $\displaystyle\min\limits_{x \in \R^n} \{ c^T x \exp(-x^T A x) \}$.\hfill[$c \in \R^n$, $A \in \S^n_{++}$]
+\item $\displaystyle \min_{X \in \R^{k \times n}} \| A X - B \|_F$.\hfill[$A \in \R^{m \times k}$, $B \in \R^{m \times n}$, $\Rank(A) = k$]
+
+Решение:
+
+$$
+df(x)[H] = 1/2 d(\| A X - B \|_F^2) = Tr((X^TA^T - B^T)AH)
+$$
+
+$$
+(X^TA^T - B^T)A = 0
+$$
+
+$$
+X^TA^T - B^T= 0
+$$
+
+$$
+X^TA^T = B^T
+$$
+
+$$
+X = (A^TA)^{-1}A^TB
+$$
+
+$$
+d^2 f(x)[H_1, H_2] = Tr(H_1^TA^TAH)
+$$
+
+Матрица Гессе -- $A^TA$ -- положительно опр по условию -- $X = A^{-1}B$ -- минимум
+
+$$
+\| A X - B \|_F^2 =  \|A (A^TA)^{-1}A^TB - B \|_F^2 = 0
+$$
+
+\item $\displaystyle\min_{X \in \R^{n \times n}, \, \Det(X) > 0} \left\{ \frac{1}{m} \sum\limits_{i=1}^m a_i^T X^{-1} a_i + \ln \Det(X) \right\}$.\hfill[$a_i \in \R^n$ для всех $1 \leq i \leq n$]
+\item $\displaystyle\min_{X \in \R^{m \times n}, \, \Tr(B^T X) < 1} \left\{ \Tr(A^T X) - \ln( 1 - \Tr(B^T X)) \right\}$.\hfill[$A, B \in \R^{m \times n}$]
+
+Решение:
+
+$$
+df(X) = d(\Tr(A^T X) - \ln( 1 - \Tr(B^T X))) = -\frac{Tr(HB^T)}{Tr(XB^T) - 1} + Tr(A^TH) = Tr(H(\frac{B^T}{1 - Tr(XB^T)} + A^T))
+$$
+
+$$
+\nabla f(a) = \frac{B^T}{1 - Tr(XB^T)} + A^T
+$$
+
+$$
+A(-1 + Tr(B^TX)) = B
+$$
+
+Получаем что матрицы должны быть пропорциональны и должно выполняться условие $Tr(B^TX) - 1 = Tr(B^TX)$
+
+\end{enumerate}
+
+\end{enumerate}
+
+\end{document}

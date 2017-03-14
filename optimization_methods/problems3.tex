@@ -1,0 +1,242 @@
+\documentclass{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+
+% Wide page
+\usepackage{fullpage}
+
+% Maths
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs} % turn off numbering of unreferenced equations
+\usepackage{amsmath,amssymb,amsthm}
+
+% Advanced enumerate
+\usepackage{enumitem}
+
+% Nice frameboxes
+\usepackage{mdframed}
+
+% Advanced verbatim
+\usepackage{fancyvrb}
+
+% Hyperlinks
+\usepackage{hyperref}
+
+% Multiple columns
+\usepackage{multicol}
+\setlength\columnsep{-3em} % default columnsep for all pages
+
+% Tables
+\usepackage{diagbox} % Diagonal line in table header
+\renewcommand{\arraystretch}{1.2} % More space between table rows
+
+% Redefine some useful commands
+\renewcommand{\epsilon}{\varepsilon} % nice-looking epsilon
+
+% My operators
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\S}{\mathbb{S}}
+\DeclareMathOperator{\Exists}{\exists}
+\DeclareMathOperator{\Forall}{\forall}
+\DeclareMathOperator*{\Tr}{Tr}
+\DeclareMathOperator*{\Det}{Det}
+\DeclareMathOperator*{\Diag}{Diag}
+\DeclareMathOperator*{\Rank}{Rank}
+\DeclareMathOperator*{\Dom}{Dom}
+
+\title{\vspace{-2em}Методы оптимизации (ФКН ВШЭ, 2017). Домашняя работа 3.\\Тема: Выпуклые множества и функции.}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{mdframed}
+\begin{center}
+Домашнее задание 3, Царькова Анастасия.
+\end{center}
+\end{mdframed}
+
+\begin{enumerate}[label=\textbf{\arabic*}, leftmargin=0em]
+
+\section*{Обязательная часть (10 баллов)}
+
+\item Покажите, что единичная сфера $\{ x \in \mathbb{R}^n \, | \, \|x\| = 1 \}$ не является выпуклым множеством. Здесь $\| \cdot \|$ --- произвольная норма.
+
+Решение:
+
+Рассмотрим пример из $\mathbb{R}^2$. Возьмем на сфере две противоположных точки, например $(0, 1)$ и $(0, -1)$. Возьмем точку посередине -- $(0,1)\cdot0.5 + (0,-1)\cdot0,5 = (0,0)$. Проверим лежит ли полученная точка на сфере -- $\|(0,0)\| \neq 1$ -- нет --> данное множество не выпуклое.
+
+\item Какие из следующих множеств являются выпуклыми? Ответ обосновать.
+\begin{enumerate}
+
+\begin{multicols}{2}
+    \item $\{ x \in \mathbb{R}^n \, | \, \max_{i} x_i \leqslant 1\}$
+    \item $\{ x \in \mathbb{R}^n \, | \, \max_{i} x_i \geqslant 1\}$
+
+    \item $\{ x \in \mathbb{R}^n \, | \, \min_{i} x_i \leqslant 1\}$
+    \item $\{ x \in \mathbb{R}^n \, | \, \min_{i} x_i \geqslant 1\}$
+\end{multicols}
+
+Решение:
+
+(a) Рассмотрим два элемента из данного множества $a,b$. Тогда для элемента $ c_i = a_i\lambda + b_i(1 - \lambda) \leq  \lambda + (1 - \lambda) = 1$, а следовательно $\max_{i} c_i \leq 1$
+
+
+(b) Рассмотрим два элемента данного множества -- $(1,0), (0,1)$ и рассмотрим среднюю точку между ними -- $(0,1)\cdot0.5 + (1,0)\cdot0,5 = (0.5,0.5)$ -- полученная точка не пренаджежит исходному множеству --> множество не выпуклое.
+
+(c) Рассмотрим два элемента данного множетсва $(x,1),(1,x)$ и рассмотрим среднюю точку между ними -- $(x,1)\cdot0.5 + (1,x)\cdot0,5 = (0.5 + x/2,0.5 + x/2 )$ -- для $x > 1$ верно что $x/2 > 0.5$ --> $\min_{i} (0.5 + x/2,0.5 + x/2)_i \geq 1$ -- множество не выпуклое.
+
+(d) Рассмотрим два элемента из данного множества $a,b$. Тогда для элемента $ c_i = a_i\lambda + b_i(1 - \lambda) \geq  \lambda + (1 - \lambda) = 1$, а следовательно $\max_{i} c_i \geq 1$
+
+
+\end{enumerate}
+
+\item Покажите выпуклость множества $\{ x \in \R^n \; \big| \; x^T P x \leqslant (c^T x)^2, \, c^T x \geqslant 0 \}$, где $c \in \R^n, \; P \in \S_{++}^n$.
+
+Решение:
+
+Рассмотрим два элемента из данного множества $a,b$. По неравенству Коши-Буняковского: $\sqrt{a^TPbb^TPa} \leq a^TPb$. Тогда рассмотрим точку между a и b:
+
+$$
+(c^T(a\lambda + (1-\lambda)b))^2 = (c^Ta)\lambda^2 + 2(1-\lambda)\lambda c^Tac^Tb + (c^Tb)^2(1 - \lambda)^2 \geq
+$$
+$$
+\geq \lambda^2a^TPa + 2(1-\lambda)\lambda \sqrt{a^TPa b^TPb} + (1 - \lambda)^2 b^TPb \geq \lambda^2a^TPa + 2(1-\lambda)\lambda a^TPb + (1 - \lambda)^2 b^TPa = ((1-\lambda)b + \lambda a)^T P ((1-\lambda)b + \lambda a)
+$$
+
+Получили что линейная комбинация a и b принадлежит данному множеству --> множество является выпуклым.
+
+
+\item Покажите, что следующие функции являются выпуклыми:
+\begin{enumerate}
+    \item $\displaystyle f(x) = \sum_{i = 1}^n w_i \ln(1 + \exp(a_i^T x)) + \frac{\mu}{2}\|x\|^2_2, \qquad \mu > 0, \; w_i > 0, \; a_i \in \mathbb{R}^n, \quad \Dom f~:=~\mathbb{R}^n$.
+
+    \item $\displaystyle f(x) = \max_{1 \leq i \leq n} \Bigl\{ w_i \ln\bigl(1 + \exp( |x_i| )\bigr) \Bigr\}, \qquad w_i > 0, \; \quad \Dom f := \mathbb{R}^n$.
+
+    \item $\displaystyle f(X) = \Tr( X^{-1} ), \qquad \Dom f := \mathbb{S}^n_{++}$.
+
+    \item $\displaystyle f(x) = (a^T x - b)_+, \qquad a \in \mathbb{R}^n, \; b \in \mathbb{R}, \quad \Dom f := \mathbb{R}^n$.
+
+    \item $\displaystyle f(x) = \ln \left( \sum_{i = 1}^n \exp( [(x_i)_+]^2 ) \right), \qquad \Dom f := \mathbb{R}^n$.
+\end{enumerate}
+
+(a) -
+
+
+(b) -
+
+
+(c) Найдем втору производную
+
+$$
+d(\Tr( X^{-1} )) = - \Tr( X^{-1}HX^{-1})
+$$
+
+$$
+d^2(- \Tr( X^{-1}HX^{-1})) = 2Tr(X^{-1}HX^{-1}HX^{-1})
+$$
+
+$$
+\|A\|_{F} = Tr(A^TA)^{1/2}
+$$
+
+$$
+2Tr(X^{-1}HX^{-1}HX^{-1}) = 2Tr(X^{-1}HX^{-1/2}X^{-1/2}HX^{-1}) = \|X^{-1}HX^{-1/2}\|_{F}^2 > 0
+$$
+
+Следовательно функция является выпуклой.
+
+
+(d) Рассмотрим два элемента из данного множества $a,b$. Линейная сумма данных элементов
+
+$$
+f(c) = f(x\lambda + y(1 - \lambda)) = (a^T(x\lambda + y(1 - \lambda)) - b = a^Tx\lambda + a^Ty(1 - \lambda)) - b)_+ = (a^Tx\lambda + a^Ty - a^T\lambda - b)_+ \geq
+$$
+
+$$
+\geq (a^Tx\lambda - a^Ty\lambda + \lambda b - \lambda b)_+ + (a^Ty - b)_+ = f(y) + \lambda f(x) - \lambda f(y) =  \lambda f(x) + (1-\lambda) f(y)
+$$
+
+Функция выпуклая.
+
+(Обозначение: $(t)_+ := \max\{t, 0\}$ --- положительная срезка.)
+
+\item Пусть $f: Q \rightarrow \R$, где $Q$ --- выпуклое множество. Докажите эквивалентность следующих утверждений:
+\begin{enumerate}
+\item Функция $f$ является выпуклой: $f(\lambda x + (1 - \lambda) y) \leqslant \alpha f(x) + (1 - \lambda) f(y)$ для всех $x, y \in Q$, $\lambda \in (0, 1)$.
+\item Надграфик $\text{Epi}(f) := \{ (x, t) \in Q \times \mathbb{R} \, | \, f(x) \leqslant t \}$ является выпуклым множеством.
+\end{enumerate}
+
+
+Решение:
+
+
+Покажем a -> b.
+
+Пусть $f(a) \geq t_1$ и $f(b) \geq t_2$.
+
+Рассмотрим линейную комбинацию -- $f(\lambda a + (1 - \lambda) b) \leq \lambda f(a) + (1- \lambda) b \leq \lambda t_1 + (1 - \lambda) t_2$ следовательно надргафиг выпуклое мн.
+
+
+Покажем b -> a.
+
+Пусть $f(a) = t_1$ и $f(b) = t_2$.
+
+$f(\lambda x + (1 - \lambda) y) $ (по условию) $ \leq \lambda t_1 + (1 - \lambda) t_2 < \lambda f(a) + (1 - \lambda) f(b)$ — f выпуклая
+
+
+
+
+
+
+\bigskip
+
+\section*{Бонусная часть (6 баллов)}
+
+\item Для каждой из следующих функций определите, является ли она выпуклой? Вогнутой?
+\begin{enumerate}
+\item $\displaystyle f(x) = \left( \sum_{i=1}^n x_i^p \right)^{\frac{1}{p}}, \quad p < 1, \ p \neq 0, \qquad \Dom f := \R_{++}^n$.
+
+\item (Минимальное сингулярное число) $f(X) = \sigma_{\min}(X), \qquad \Dom f := \R^{m \times n}$.
+
+\item (Среднее геометрическое компонент) $\displaystyle f(x) = \left(\prod_{i=1}^n x_i \right)^{1/n}, \qquad \Dom f~:=~\R_{+}^n$.
+
+\item (Среднее геометрическое собственных значений) $\displaystyle f(X) = \left( \prod_{i=1}^n \lambda_i(X) \right)^{1/n}, \qquad \Dom f := \S^n_{+}$.
+
+\item (Сумма $k$ старших компонент) $\displaystyle f(x) = \sum_{i=1}^k x_{[i]}, \qquad 1 \leqslant k \leqslant n, \qquad \Dom f := \R^n$.\\
+(Здесь $x_{[i]}$ обозначает $i$-ую компоненту отсортированного по убыванию вектора $x$.)
+\end{enumerate}
+
+\item Рассмотрим функцию двух аргументов:
+\begin{equation}
+f(x) =
+\begin{cases}
+\frac{x_2^2}{x_1}, \quad &x_1 > 0, \\
+0, \quad &x_1 = x_2 = 0,
+\end{cases} \qquad \Dom f := \R_+ \times \R.
+\end{equation}
+Покажите, что надграфик $\text{Epi}(f) := \{ (x, t) \in \Dom f \times \R \, | \, f(x) \leqslant t  \}$ является выпуклым множеством и, тем самым, функция $f$ является выпуклой (хоть и разрывной).
+
+\item Пусть $\mathcal{F} \subset C^1(\R^n)$ --- максимальное по включению подмножество непрерывно-дифференцируемых функций на $\R^n$, удовлетворяющее следующим трем требованиям.
+\begin{itemize}
+\item Для произвольной функции $f \in \mathcal{F}$ условие оптимальности первого порядка в некоторой точке является \emph{достаточным} для того, чтобы эта точка была глобальным минимумом функции:
+\begin{equation}
+\Bigl(\nabla f(x_0) = 0, \ x_0 \in \R^n \Bigr) \quad \Rightarrow \quad \Bigl( f(x) \geq f(x_0) \; \text{ для всех } x \in \R^n \Bigr),
+\end{equation}
+\item Класс $\mathcal{F}$ замкнут относительно неотрицательных линейных комбинаций:
+\begin{equation}
+\Bigl(f_1, f_2 \in \mathcal{F}, \; \; \alpha, \beta \geqslant 0\Bigr) \quad \Rightarrow \quad \Bigl(\alpha f_1 + \beta f_2 \in \mathcal{F}\Bigl),
+\end{equation}
+\item Класс $\mathcal{F}$ содержит все аффинные функции:
+\begin{equation}
+\Bigl(f(x) = a^T x + b, \quad a \in \R^n, \; b \in \R \Bigr) \quad \Rightarrow \quad \Bigl(f \in \mathcal{F}\Bigl).
+\end{equation}
+\end{itemize}
+Докажите, что $\mathcal{F}$ состоит в точности из всех непрерывно-дифференцируемых выпуклых функций.
+
+\end{enumerate}
+
+\end{document}

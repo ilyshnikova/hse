@@ -1,0 +1,190 @@
+\documentclass{article}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+
+% Wide page
+\usepackage{fullpage}
+
+% Maths
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs} % turn off numbering of unreferenced equations
+\usepackage{amsmath,amssymb,amsthm}
+
+% Advanced enumerate
+\usepackage{enumitem}
+
+% Multiple columns
+\usepackage{multicol}
+\setlength\columnsep{-3em} % default columnsep for all pages
+
+% Tables
+\usepackage{diagbox} % Diagonal line in table header
+\renewcommand{\arraystretch}{1.2} % More space between table rows
+
+% Redefine some useful commands
+\renewcommand{\epsilon}{\varepsilon} % nice-looking epsilon
+
+% My operators
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\S}{\mathbb{S}}
+\DeclareMathOperator{\Exists}{\exists}
+\DeclareMathOperator{\Forall}{\forall}
+\newcommand{\Tr}{\mathrm{Tr}}
+\newcommand{\Det}{\mathrm{Det}}
+\newcommand{\Diag}{\mathrm{Diag}}
+\newcommand{\Rank}{\mathrm{Rank}}
+
+\title{\vspace{-2em}Методы оптимизации (ФКН ВШЭ, 2017). Домашняя работа 1.\\Тема: Скорости сходимости и матричные вычисления.}
+\author{Срок сдачи: 17 января 2017 (на семинаре)}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{enumerate}[label=\textbf{\arabic*}, leftmargin=0em]
+\item Классифицируйте каждую из следующих последовательностей $(r_k)_{k \geq 1}$ по скорости сходимости (линейная/сублинейная/сверхлинейная). Для сверхлинейно сходящихся последовательностей необходимо дополнительно выяснить, имеет ли место квадратичная сходимость.
+\begin{multicols}{3}
+	\begin{enumerate}
+		\item $r_k := (0.99)^k$
+		\item $r_k := (0.99)^{k^2}$
+		\item $r_k := (0.99)^{2^k}$
+		\item $r_k := 1/k$
+		\item $r_k := 1/\sqrt{k}$
+		\item $r_k := 1/k^2$
+		\item $r_k := 1/k!$
+		\item $r_k := 1/k^k$
+		\item $r_k := \begin{cases}
+		\left(0.99\right)^{2^k}, & \text{если $k$ четное}, \\
+		\frac{r_{k-1}}{k}, & \text{иначе}
+		\end{cases}$
+		\item $(r_k) := \left(1, \frac{1}{4}, \frac{1}{2}, \frac{1}{8}, \frac{1}{4}, \frac{1}{16}, \frac{1}{8}, \dots \right)$
+	\end{enumerate}
+\end{multicols}
+
+\item Рассмотрим следующие три семейства последовательностей:
+\begin{enumerate}[ref=(\alph*)]
+	\item (Сублинейные) $r_k := C / k^{\gamma}$.\hfill$[C, \gamma > 0]$
+	\item (Линейные) $r_k := C q^k$.\hfill$[C > 0, \, q \in (0, 1)]$
+	\item (Квадратичные) $r_k := C (C^{-1} R)^{2^k}$.\hfill$[C > 0, \, C^{-1} R \in (0, 1)]$
+\end{enumerate}
+Обозначим $k(\epsilon) := \min\{ k \geq 1 : r_k \leq \epsilon C \}$~--- необходимое число шагов для достижения заданной относительной точности $\epsilon \in (0, 1)$.
+
+Для каждого из указанных семейств выпишите явную формулу для $k(\epsilon)$. Проанализируйте, насколько сильно $k(\cdot)$ зависит от требуемой точности $\epsilon$ и соответствующего параметра семейства ($\gamma$, $q$, $R$). Заполните следующие таблицы, вписав в пустые ячейки соответствующие числовые значения $k(\epsilon)$:
+\begin{multicols}{3}
+	
+	\begin{tabular}{|l|l|l|l|}\hline
+		\multicolumn{4}{|c|}{Сублинейные} \\ \hline
+		\multicolumn{1}{|c|}{\diagbox{$\epsilon$}{$\gamma$}} & \multicolumn{1}{c|}{1} & \multicolumn{1}{c|}{2} & \multicolumn{1}{c|}{0.5} \\ \hline
+		$10^{-1}$ & \hphantom{$1000$} & \hphantom{$1000$} & \hphantom{$1000$} \\ \hline
+		$10^{-3}$ & & & \\ \hline
+		$10^{-5}$ & & & \\ \hline
+		$10^{-7}$ & & & \\ \hline
+		$10^{-12}$ & & & \\ \hline
+	\end{tabular}
+	\columnbreak
+	
+	\hspace{-0.5em}\begin{tabular}{|l|l|l|l|}\hline
+		\multicolumn{4}{|c|}{Линейные} \\ \hline
+		\multicolumn{1}{|c|}{\diagbox{$\epsilon$}{$q$}} & \multicolumn{1}{c|}{0.9} & \multicolumn{1}{c|}{0.999} & \multicolumn{1}{c|}{0.99999} \\ \hline
+		$10^{-1}$ & \hphantom{$1000$} & \hphantom{$1000$} & \hphantom{$1000$} \\ \hline
+		$10^{-3}$ & & & \\ \hline
+		$10^{-5}$ & & & \\ \hline
+		$10^{-7}$ & & & \\ \hline
+		$10^{-12}$ & & & \\ \hline
+	\end{tabular}
+	\columnbreak
+	
+	\begin{flushright}
+		\begin{tabular}{|l|l|l|l|} \hline
+			\multicolumn{4}{|c|}{Квадратичные} \\ \hline
+			\multicolumn{1}{|c|}{\diagbox{$\epsilon$}{$R$}} & \multicolumn{1}{c|}{$0.9 \, C$} & \multicolumn{1}{c|}{$0.999 \, C$} & \multicolumn{1}{c|}{$0.99999 \, C$} \\ \hline
+			$10^{-1}$ & \hphantom{$1000$} & \hphantom{$1000$} & \hphantom{$1000$} \\ \hline
+			$10^{-3}$ & & & \\ \hline
+			$10^{-5}$ & & & \\ \hline
+			$10^{-7}$ & & & \\ \hline
+			$10^{-12}$ & & & \\ \hline
+		\end{tabular}
+	\end{flushright}
+	
+\end{multicols}
+
+\textbf{Рекомендация:} Напишите скрипт, который заполнит все таблицы автоматически. Достаточно выписать одну значимую цифру и показатель мантиссы (например: $3 \times 10^8$)
+
+\item Упростите каждое из из следующих выражений:
+\begin{enumerate}
+\item $\Tr[(A X B)^{-1} A C B]$\hfill[$A, B, C, X \in \R^{n \times n}$, $\Det(A X B) \neq 0$]
+\item $\Det[A X B (C^{-T} X^T C)^{-T}]$\hfill[$A, B, C, X \in \R^{n \times n}$, $\Det(C) \neq 0$, $\Det(C^{-T} X^T C) \neq 0$]
+\item $\Tr[(2 I_n + a a^T)^{-1} (u v^T + v u^T)]$\hfill[$a, u, v \in \R^n$]
+\item $\| u v^T - A \|_F^2 - \| A \|_F^2$\hfill[$u \in \R^m$, $v \in \R^n$, $A \in \R^{m \times n}$]
+\end{enumerate}
+
+\item Перепишите каждое из следующих выражений эквивалентным образом, используя указанные в скобках векторы/матрицы и следующие три операции: матричное произведение, транспонирование и конструирование диагональной матрицы $\Diag\{x\}$ по заданному вектору $x$. Полученное выражение не должно содержать никаких индексов.
+\begin{enumerate}
+\item $\sum_{i=1}^n x_i^2$\hfill[$x \in \R^n$]
+\item $\sum_{i=1}^m \sum_{j=1}^n a_{ij} x_i y_j$\hfill[$A \in \R^{m \times n}$, $x \in \R^m$, $y \in \R^n$]
+\item $\sum_{i=1}^n c_i a_i$\hfill[$c \in \R^n$, $A := [a_1, \dots, a_n] \in \R^{m \times n}$]
+\item $\sum_{i=1}^k  u_i v_i^T$\hfill[$U := [u_1, \dots, u_k] \in \R^{m \times k}$, $V := [v_1, \dots, v_k] \in \R^{n \times k}$]
+\item $B := (c_i a_{ij})_{i,j=1}^{m,n}$\hfill[$A := \R^{m \times n}$, $c \in \R^m$]
+\item $B := (c_j a_{ij})_{i,j=1}^{m,n}$\hfill[$A := \R^{m \times n}$, $c \in \R^n$]
+\item $\sum_{i=1}^k \sigma_i u_i v_i^T$\hfill[$\sigma \in \R^k$, $U := [u_1, \dots, u_k] \in \R^{m \times k}$, $V := [v_1, \dots, v_k] \in \R^{n \times k}$]
+\item $\sum_{i=1}^k \sum_{j=1}^s \sigma_{ij} u_i v_j^T$\hfill[$\Sigma \in \R^{k \times s}$, $U := [u_1, \dots, u_k] \in \R^{m \times k}$, $V := [v_1, \dots, v_s] \in \R^{n \times s}$]
+\end{enumerate}
+
+\item Для каждого из следующих утверждений либо докажите его истинность (для произвольных значений соответствующих переменных), либо приведите пример, демонстрирующий его ложность. Если утверждение является некорректно сформированным, объясните, какие конкретно операции в нем являются недопустимыми.
+\begin{enumerate}
+	\item $xAx^T = x^TAx$\hfill[$x \in \R^n$, $A \in \R^{n \times n}$]
+	\item $x^TAy + y^TAx = 2x^TAy$\hfill[$x, y \in \R^n$, $A \in \R^{n \times n}$]
+	\item $\Det(A) \Tr(B) = \Tr(\Det(A) B)$\hfill[$A, B \in \R^{n \times n}$]
+	\item $a^T x = \beta \quad \Rightarrow \quad x = (a^T)^{-1} \beta$\hfill[$a, x \in \R^n$, $\beta \in \R$]
+	\item $(a a^T)x = b \quad \Rightarrow \quad x = (aa^T)^{-1} b$\hfill[$a, b, x \in \R^n$]
+	\item $(I_n + a a^T)x = b \quad \Rightarrow \quad x = (I_n + aa^T)^{-1} b$\hfill[$a, b, x \in \R^n$]
+	\item $A x = b \quad \Rightarrow \quad x = A^{-1} b$\hfill[$A \in \R^{m \times n}$, $b \in \R^m$, $x \in \R^n$]
+	\item $u u^T \in \S^n_+$\hfill[$u \in \R^n$]
+	\item $AA^T \in \S^m_+$\hfill[$A \in \R^{m \times n}$]
+	\item $\Rank(A A^T) = 1$\hfill[$A \in \R^{m \times n}$]
+	\item $A \in \S^n_+ \quad \Rightarrow \quad B A B^T \in \S^m_+$\hfill[$B \in \R^{m \times n}$]
+	\item $A \succ 0 \quad \Leftrightarrow \quad \Det(A) > 0$\hfill[$A \in \S^n$]
+\end{enumerate}
+
+\item Пусть $A \in \S^n$. Докажите эквивалентность следующих утверждений:
+\begin{enumerate}
+\item (Положительная полуопределенность) $\Forall x \in \R^n: \quad x^T A x \geq 0$.
+\item (Неотрицательность собственных значений): $\lambda(A) \geq 0$.
+\item (Существование прямоугольного корня) $\exists D \in \R^{m \times n}: \quad A = D^T D$.
+\item (Существование квадратного корня) $\exists B \in \S^n_+: \quad A = B^2$.
+\end{enumerate}
+(Подсказка: Используйте спектральное разложение.)
+
+\item Для каждого из следующих уравнений найдите множество его всевозможных решений:
+\begin{enumerate}
+\item $a^T x = 1$\hfill[$a, x \in \R^n$]
+\item $(x x^T)a = b$\hfill[$a, b, x \in \R^n$]
+\item $(I_n + a a^T)x = b$\hfill[$a, b, x \in \R^n$]
+\item $\left[
+\begin{array}{cc}
+Q & 2I \\
+I & Q^T
+\end{array}
+\right]
+\left[
+\begin{array}{c}
+x_1\\
+x_2
+\end{array}
+\right]
+=
+\left[
+\begin{array}{c}
+b_1\\
+b_2
+\end{array}
+\right]
+$\hfill[$Q \in \R^{n \times n}$, $Q Q^T = I_n$, $x_1, x_2, b_1, b_2 \in \R^n$]
+\end{enumerate}
+
+\end{enumerate}
+
+\end{document}

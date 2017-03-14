@@ -1,0 +1,202 @@
+% !TEX encoding = UTF-8 Unicode
+\documentclass[8pt,reqno]{article}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+%\usepackage[dvips]{graphicx,graphics}
+\usepackage{graphicx}
+\usepackage{euscript}
+\usepackage{graphics}
+%\usepackage{russcorr}
+\usepackage[active]{srcltx} % SRC Specials: DVI [Inverse] Search
+\usepackage{amssymb,amsmath,amsthm,amsfonts}
+\usepackage{amsopn}
+\newtheorem{cor}{Следствие}
+\newtheorem{lem}{Лемма}
+\newtheorem{thm}{Теорема}
+\newtheorem{prop}{Предложение}
+\newtheorem*{thm_pres}{Теорема}
+\theoremstyle{definition}
+\newtheorem{defn}{Определение}
+\newtheorem{defneq}{Эквивалентное определение}
+\theoremstyle{remark}
+\newtheorem*{rem}{Замечание}
+\newtheorem*{deff}{Обозначение}
+\usepackage{verbatim}
+
+
+\newcommand{\sug}[1]{\rule[-2mm]{0.4pt}{5mm}_{\,{#1}}}
+\newcommand{\gen} {$GE^+_n(\mathbf{R}[x])\ $}
+\newcommand{\genn} {$GE^+_2(\mathbf{R}[x])\ $}
+\newcommand{\gn} {$G_n(\mathbf{R})\ $}
+\newcommand{\gln} {$GL_n(\mathbf{R}[x])\ $}
+\newcommand{\p} {\mathbf{P}}
+\newcommand{\peq} {$\mathcal{P}$}
+\newcommand{\po} {$\mathcal{P}_0$}
+\newcommand{\ff} {$\mathbf{R}\ $}
+\newcommand{\fx} {\mathbf{R}[x]}
+\newcommand{\fp} {\mathbf{R_+}}
+\newcommand{\fxp} {\mathbf{R_+}[x]}
+\newcommand{\zx} {\mathbb{Z}[x]}
+\newcommand{\zxp} {\mathbb{Z_+}[x]}
+\newcommand{\basering} {$\mathbf{F}$}
+\newcommand{\lfrac} [2] {\displaystyle \frac{#1}{#2}}
+\newcommand{\brsum} [3] {\displaystyle \sum \limits_{#1}^{#2} \left( #3\right)}
+\newcommand{\lsum} [2] {\displaystyle \sum \limits_{#1}^{#2}}
+\newcommand{\br} [1] {\left( #1 \right)}
+\usepackage{a4wide}
+\begin{document}
+
+\section*{Введение в статистику}
+
+\subsection*{Задача 1}
+
+Пусть $X_i \thicksim \mathcal{N}(\mu, \sigma^2),i = 1,...,n$ – последовательность независимых одинаково распределенных (н.о.р или i.i.d.) случайных величин. Покажите каким функциональным преобразованием можно из $X_1,...,X_n$ получить распределение Стьюдента. Какой параметр $\nu$ будет у этого распределения? Укажите, точное это соотношение, или асимптотическое.
+
+\noindent\rule{8cm}{0.4pt}
+
+
+По центральной предельной теореме получаем данное асимптотическое соотношение:
+$$
+Z = \frac{n\overline{X}_n - n\mu}{\sqrt{n\sigma}} = \frac{\sqrt{n}\left(\overline{X}_n - n\mu\right)}{\sigma} \thicksim \mathcal{N}(0, 1)
+$$
+
+$$
+V = (n - 1) \frac{S_n^2}{\sigma^2} \thicksim \chi^2(n-1)
+$$
+
+$$
+T = \frac{Z}{\sqrt{V/n}} \thicksim \mbox{St}(n-1)
+$$
+
+\subsection*{Задача2.}
+
+Пусть $X_i \thicksim \mbox{Bern}(p) i = 1,...,n$ – последовательность независимых одинаково распределенных (н.о.р или i.i.d.) случайных величин. Покажите, каким функциональным преобразованием можно из $X_1,...,X_n$ получить распределение Пуассона. Какой параметр $\lambda$ будет у этого распределения? Укажите, точное это соотношение, или асимптотическое. При каких значениях $p$ и $n$ будет верно это соотношение?
+
+\noindent\rule{8cm}{0.4pt}
+
+При $n \rightarrow \infty, p \rightarrow 0$: $\sum X_i \thicksim \mathcal{P}(np)$
+
+\subsection*{Задача3.}
+
+Пусть оценка $\theta \thicksim \mathcal{N}(\theta, \sigma^2)$. Выразите доверительный интервал уровня $1-\alpha$ через значения $\theta(x_1,...,x_n), \sigma, z_1-\alpha/2 где z_-\alpha/2$ - квантиль стандартного нормального распределения уровня $1-\alpha$, а $\theta(x_1,...,x_n)$ — значение оценки по реализации выборки (не случ. в-на). Дайте интерпретацию понятию доверительного интервала.
+
+\noindent\rule{8cm}{0.4pt}
+
+$$
+P\left(\frac{\sqrt{n}\left(\widehat{\theta} - \theta\right)}{\sigma} < z_{1-\alpha}\right) = 1 - \alpha
+$$
+
+
+$$
+P\left(\theta < \widehat{\theta} + z_{1-\alpha}\frac{\sigma}{\sqrt{n}}\right) = 1 - \alpha
+$$
+
+Толкование доверительного интервала с уровнем доверия, скажем, 95\% состоит в следующем. Если провести очень большое количество независимых экспериментов, то в 95\% экспериментов доверительный интервал будет содержать оцениваемый параметр $\theta$ (то есть будет выполняться $L \leq \theta \leq U$), а в оставшихся 5\% экспериментов доверительный интервал не будет содержать $\theta$.
+
+\subsection*{Задача4.}
+
+Пусть $X_i$ – iid случайные величины, распределенные по равномерному закону $U_{[0,\theta]}$
+
+(a) Получите оценку $\widehat{\theta}$ для $\theta$ двумя разными способами: c помощью метода максимума правдоподобия
+и с попомщью метода моментов.
+
+(b) Проверьте на смещенность и состоятельность полученные в пункте (a) оценки.
+
+\noindent\rule{8cm}{0.4pt}
+
+Метод максимума правдоподобия:
+
+$$
+\left(\ln{\prod \frac{1}{\theta}} \right)^{'}_{\theta} = \left(-\ln{\theta^n} \right)^{'}_{\theta} = \left(-n\ln{\theta} \right)^{'}_{\theta} =
+$$
+
+$$
+L_n(\theta, X_n) = \left\{\begin{array}{rcl}
+\lfrac{1}{\theta^n}, X_i \in [0,\theta], \\
+\\
+0, \exists X_i \notin  [0,\theta] \\
+\end{array}\right.
+$$
+
+
+$$
+\forall \theta, L_n (\theta, X_n) \leq \lfrac{1}{X^n_{(n)}} = L_{max}
+$$
+
+$$
+\widehat{\theta} = X_{(n)} = max(X_1,...,X_n)
+$$
+
+Проверим на смещенность и состоятельность:
+
+$$
+P\left(\max{X_1,...,X_n} \leq \right) = \left(\lfrac{x}{\theta}\right)^n
+$$
+
+$$
+E\max{X_1,...,X_n} = \int\limits_0^{\theta} x d\left(\lfrac{x^n}{\theta^n}\right) = \lfrac{n}{n+1} \theta
+$$
+
+$$
+P\left(|\max{X_1,...X_n} - \theta| > \epsilon \right) = \prod P\left(X_i < \theta - \epsilon\right)  = \left( \lfrac{\theta - \epsilon}{\theta}\right)^n
+$$
+
+Получили что данная оценка состоятельна и асимптотически несмещенная.
+
+Метод моментов:
+
+$$
+\lfrac{\widehat{\theta}}{2} = \overline{X}_n
+$$
+
+$$
+\widehat{\theta} = 2\overline{X}_n
+$$
+
+Проверим на смещенность и состоятельность:
+
+$$
+E \widehat{\theta} = E 2\overline{X}_n = \lfrac{2}{n} \sum{EX_i} = \theta
+$$
+
+Данная оценка состоятельна по збч и несмещенная.
+
+\subsection*{Задача5.}
+
+Для iid выборки $X_1,...,X_n \thicksim Exp(\lambda)$ найдите с помощью дельта метода дисперсию $\overline{X}_n^2$ ,
+
+\noindent\rule{8cm}{0.4pt}
+
+$$
+g(\theta) = x^2, g'(x) = 2x
+$$
+
+$$
+\overline{X}_n \thicksim \mathcal{N}\left(\lfrac{1}{\lambda},\lfrac{1}{\lambda^2 n}\right),
+g(\widehat{\theta}_n) \thicksim \mathcal{N}\left(g(\theta), \lfrac{\sigma^2}{n}(g'(\theta))^2\right)
+$$
+
+$$
+\overline{X}^2_n \thicksim \left( \lfrac{1}{\lambda^2}, \lfrac{4}{\lambda^4n}\right) \rightarrow
+D\overline{X}_n^2 =  \lfrac{4}{\lambda^4n}
+$$
+
+
+\subsection*{Задача6.}
+
+Опишите как работает бутстрэп. Для чего его можно использовать? Почему семплировать n объектов с повторениями лучше, чем семплировать меньше объектов без повторения? Приведите аргументы в пользу осмысленности именно такой процедуры.
+
+\noindent\rule{8cm}{0.4pt}
+
+Суть метода в формировании множествa выборок на основе случайного выбора с повторениями.
+
+Явлется полезным инструментом если о законе распределения нет никаких априорных сведений, а получить оценки его характеристик необходимо.
+
+Сэмплирование с повторениями позволяют сделать получанные выборки более независимыми(так как значение которое мы получим первым никак не повлияет на последуюшее, чего нет при реальном получании данных для статистики). Если мы делаем сэмплирование без возвращения ковариация начнает завиметь от размера выборки. Если выборка большая то ковариация близка к нулю, в этом случае эемплирование с заменой не сильно отличается от бесповторного.
+
+\section*{Введение в статистику}
+
+\subsection*{Задача1.}
+
+
+\end{document}

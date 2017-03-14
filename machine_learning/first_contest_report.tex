@@ -1,0 +1,85 @@
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass[10pt,reqno]{amsart}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=2cm,bmargin=2cm,lmargin=2.5cm,rmargin=1.5cm}
+%\usepackage[dvips]{graphicx,graphics}
+\usepackage{graphicx}
+\usepackage{euscript}
+\usepackage{graphics}
+\usepackage{centernot}
+%\usepackage{russcorr}
+\usepackage[active]{srcltx} % SRC Specials: DVI [Inverse] Search
+\usepackage{amssymb,amsmath,amsthm,amsfonts}
+\usepackage{amsopn}
+\newtheorem{cor}{Следствие}
+\newtheorem{lem}{Лемма}
+\newtheorem{thm}{Теорема}
+\newtheorem{prop}{Предложение}
+\newtheorem*{thm_pres}{Теорема}
+\theoremstyle{definition}
+\newtheorem{defn}{Определение}
+\newtheorem{defneq}{Эквивалентное определение}
+\theoremstyle{remark}
+\newtheorem*{rem}{Замечание}
+\newtheorem*{deff}{Обозначение}
+\newtheorem{ex}{Пример}
+\usepackage{verbatim}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{tabularx}
+\usepackage{pbox}
+\usepackage{bussproofs}
+
+\newcommand{\lfrac} [2] {\displaystyle \frac{#1}{#2}}
+\newcommand{\brsum} [3] {\displaystyle \sum \limits_{#1}^{#2} \left( #3\right)}
+\newcommand{\lsum} [2] {\displaystyle \sum \limits_{#1}^{#2}}
+\newcommand{\br} [1] {\left( #1 \right)}
+\usepackage{a4wide}
+\begin{document}
+\section*{Oтчёт по соревнованию 1}
+\section*{Царькова Анастасия}
+
+При решении задачи предсказание победы в игре Dota по данным о первых 5 минутах игры использовалось вде модели, первая -- логистическая регрессия из Vowpal Wabbit, вторая -- лосистическая регрессия из sklearn.
+\newline
+
+
+
+Первая модель справлялась с поставленной задачей хуже чем вторая, она улучшалась от отсеивании признаков с малым весом, но ей становилось хуже при выполнении one-hot на lobby\_type, масштабировании признаков и прочих размножений признаков. И из-за того  что она не позволяла более ничего сделать с выборкой, было принято решение попробовать sklearn регрессию, которая нормально реагировала на на все эти взаимодействия, давала гораздо более лушее качество предсказания(c 0.67 улучшилось до 0.59), и улучшалась при возвращении всех признаков которые были приняты малозначимыми Vowpal Wabbit-ом.
+\newline
+
+
+Признаки были были обработаны следующим образом:
+\newline
+
+-- были удалены признаки "match\_id", "start\_time"
+\newline
+
+-- Пропущенные значения были заменены на нулевые
+\newline
+
+-- Был использован мешок слов по героям
+\newline
+
+
+-- One-hot-encoding по lobby\_type(улучшило предказание на 0.00025)
+\newline
+
+
+-- по признакам '*\_level', '*\_xp', '*\_gold', '*\_lh', '*\_kills', '*\_deaths', '*\_items' были добавлены дисперсия и среднее каждого значения по команде
+\newline
+
+
+-- В конце было проведено масштабирование всех признаков(улучшило предсказание на 0.00001)
+\newline
+
+
+По мешку слов и добавления дисперсии и среднего значения некоторых признаков не могу оценить насколько улучшилось предсказание поскольку программа была разделена на две части -- первая большая и долгое обработка признаков которая воздавала новый csv файл -- вторая быстрая обработка с помощью встроенных в sklearn функций и обучение модели.
+\newline
+
+
+Так как из всего датасета 15\% случайных записей были выделены в тестовое множество  было принято оценивать качество по значению log-loss на трейне, это го вполне хватало что бы понять улучшается ли предсказания и понять порядок на который уменьшится значение log-loss на тестовой выборке.
+
+\end{document}

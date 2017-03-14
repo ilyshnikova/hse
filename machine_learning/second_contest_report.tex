@@ -1,0 +1,83 @@
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass[10pt,reqno]{amsart}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=2cm,bmargin=2cm,lmargin=2.5cm,rmargin=1.5cm}
+%\usepackage[dvips]{graphicx,graphics}
+\usepackage{graphicx}
+\usepackage{euscript}
+\usepackage{graphics}
+\usepackage{centernot}
+%\usepackage{russcorr}
+\usepackage[active]{srcltx} % SRC Specials: DVI [Inverse] Search
+\usepackage{amssymb,amsmath,amsthm,amsfonts}
+\usepackage{amsopn}
+\newtheorem{cor}{Следствие}
+\newtheorem{lem}{Лемма}
+\newtheorem{thm}{Теорема}
+\newtheorem{prop}{Предложение}
+\newtheorem*{thm_pres}{Теорема}
+\theoremstyle{definition}
+\newtheorem{defn}{Определение}
+\newtheorem{defneq}{Эквивалентное определение}
+\theoremstyle{remark}
+\newtheorem*{rem}{Замечание}
+\newtheorem*{deff}{Обозначение}
+\newtheorem{ex}{Пример}
+\usepackage{verbatim}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{tabularx}
+\usepackage{pbox}
+\usepackage{bussproofs}
+
+\newcommand{\lfrac} [2] {\displaystyle \frac{#1}{#2}}
+\newcommand{\brsum} [3] {\displaystyle \sum \limits_{#1}^{#2} \left( #3\right)}
+\newcommand{\lsum} [2] {\displaystyle \sum \limits_{#1}^{#2}}
+\newcommand{\br} [1] {\left( #1 \right)}
+\usepackage{a4wide}
+\begin{document}
+\section*{Oтчёт по соревнованию 1}
+\section*{Царькова Анастасия}
+
+При решении задачи предсказание победы в игре Dota по данным о первых 5 минутах игры использовалось две модели, первая -- логистическая регрессия из Vowpal Wabbit, вторая -- логистическая регрессия из sklearn.
+\newline
+
+Первая модель справлялась с поставленной задачей хуже, чем вторая, она улучшалась от отсеивания признаков с малым весом, но ей становилось хуже при выполнении one-hot на lobby\_type, при масштабировании признаков, при их размножении. Применение логистической регрессии из sklearn позволило улучшить качество предсказаний с 0.67 до 0.59.
+\newline
+
+
+Признаки были были обработаны следующим образом:
+\newline
+
+-- были удалены признаки "match\_id", "start\_time"
+\newline
+
+-- Пропущенные значения были заменены на нулевые
+\newline
+
+-- Был использован мешок слов по героям
+\newline
+
+
+-- One-hot-encoding по lobby\_type (улучшило предказание на 0.00025)
+\newline
+
+
+-- по признакам '*\_level', '*\_xp', '*\_gold', '*\_lh', '*\_kills', '*\_deaths', '*\_items' были добавлены дисперсия и среднее каждого значения по команде
+\newline
+
+
+-- В конце было проведено масштабирование всех признаков (улучшило предсказание на 0.00001)
+\newline
+
+
+Первая часть программы обрабатывала признаки и создавала новый csv файл(add\_hero\_fields.py), вторая занималась обработкой с помощью встроенных в sklearn функций и обучением модели(prog.py). Из-за разбиения программы на две части сложно оценить, насколько улучшилось качество предсказания после применения мешка слов и добавления новых признаков.
+\newline
+
+
+Так как из всего датасета 15\% случайных записей были выделены в тестовое множество, было принято оценивать качество по значению log-loss на трейне, этого вполне хватало, чтобы понять, улучшаются ли предсказания, и понять порядок, на который уменьшится значение log-loss на тестовой выборке.
+
+\end{document}
