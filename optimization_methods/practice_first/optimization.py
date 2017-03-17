@@ -71,7 +71,7 @@ class LineSearchTool(object):
 			return oracle.func_directional(x_k, d_k, alpha)
 
 		while (phi(alpha) > phi(0) + c * alpha * oracle.grad_directional(x_k, d_k, 0)):
-			alpha = alpha / 2
+			alpha = alpha / 2.
 
 		"""
 		Finds the step size alpha for a given starting point x_k
@@ -181,7 +181,6 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 		print('x_k: {0}'.format(x_k))
 
 
-	import pdb; pdb.set_trace()
 	while (np.linalg.norm(oracle.grad(x_k))**2 > tolerance * np.linalg.norm(oracle.grad(x_0))**2):
 		if  np.isnan(x_k).all() or not np.isfinite(x_k).all():
 			message = "computational_error"
@@ -208,7 +207,6 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 			break
 
 
-	import pdb; pdb.set_trace()
 
 	return x_k, message, history
 

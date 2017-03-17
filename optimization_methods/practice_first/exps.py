@@ -4,6 +4,10 @@ import scipy as sp
 from datetime import datetime
 from collections import defaultdict
 
+import oracles
+import optimization
+import plot_trajectory_2d
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -20,9 +24,9 @@ def plot_levels(func, xrange=None, yrange=None, levels=None):
     >> plot_levels(oracle.func)
     """
     if xrange is None:
-        xrange = [-6, 6]
+        xrange = [-20, 20]
     if yrange is None:
-        yrange = [-5, 5]
+        yrange = [-20, 20]
     if levels is None:
         levels = [0, 0.25, 1, 4, 9, 16, 25]
 
@@ -61,37 +65,109 @@ def plot_trajectory(func, history, fit_axis=False, label=None):
     x_values = np.array(x_values)
     y_values = np.array(y_values)
 
-
     plt.quiver(x_values[:-1], y_values[:-1], x_values[1:] - x_values[:-1], y_values[1:]-y_values[:-1], scale_units='xy', angles='xy', scale=1, linewidth=0.1)
+
+    plt.plot(x_values, y_values, '-v', linewidth=2.0, ms=7.0, alpha=0.5, c='k', label=label)
 
     if fit_axis:
         xmax, ymax = np.max(x_values), np.max(y_values)
-        COEF = 1.5
+        COEF = 2
         xrange = [-xmax * COEF, xmax * COEF]
         yrange = [-ymax * COEF, ymax * COEF]
         plt.xlim(xrange)
         plt.ylim(yrange)
 
 
-A = np.array([[10., 20.], [20., 5.]])
+
+def first_exp(A, x_0, method, b=np.zeros(2), levels=None):
+#	A = np.array([[10., 20.], [20., 5.]])
+
+	oracle = oracles.QuadraticOracle(A, b)
+	[x_star, msg, history] = optimization.gradient_descent(
+	    oracle, x_0,
+	    trace=True,
+	    line_search_options={
+	        'method': method,
+	        'c1': 1e-4,
+	        'c2': 0.3,
+		'c': 0.1
+	    }
+	)
+
+	if msg != 'success':
+		print(msg)
+		return
+
+	x_values, y_values = zip(*history['x'])
+	x_max = max(x_values)
+	x_min = min(x_values)
+	y_max = max(y_values)
+	y_min = min(y_values)
+
+	size = max(x_max - x_min, y_max - y_min)
+
+	plot_levels(oracle.func, levels=levels)#, [x_min - size, x_max + size], [y_min - size, y_max + size])
+	plot_trajectory(oracle.func, history['x'], fit_axis=False)
+
+	plt.title(
+		'gradient descent with %s linear search, steps: %d\n from point %s \nfor Quadratic function with\n A = %s' % (
+			method,
+			len(history['x']) - 1,
+			str(x_0),
+			str(A.toarray())
+		)
+	)
+	plt.show()
+
+	print(np.linalg.cond(A.toarray()))
+
+
+def create_matrix(n, k):
+	d = np.random.randint(1, k, size=n)
+	d[0] = 1
+	d[1] = k
+	return sp.sparse.spdiags(d, 0, d.size, d.size)
+
+
+
+#for k in [3, 10, 50, 100, 400, 700 , 1000]:
+#	A = create_matrix(2, k)
+#	x_0 = np.array([1,2.])
+#	first_exp(A, x_0, method)
+
+
+A = create_matrix(2, 3)
+x_0 = np.array([1,2.])
+
 method = 'Wolfe'
+first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
 
-oracle = oracles.QuadraticOracle(A, np.zeros(2))
-[x_star, msg, history] = optimization.gradient_descent(
-    oracle, np.array([3., 2.]),
-    trace=True,
-    line_search_options={
-        'method': method,
-        'c1': 1e-4,
-        'c2': 0.3
-    }
-)
 
-plot_levels(oracle.func)
-plot_trajectory(oracle.func, history['x'], fit_axis=True)
+method = 'Armijo'
+first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
 
-plt.title('gradient descent with %s linear search, steps: %d\n for Quadratic function with\n A = %s' % (method, len(history['x']), str(A)))
-plt.show()
+method = 'Constant'
+first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
 
-print(np.linalg.cond(A))
 
+#import pdb; pdb.set_trace()
+#np.linalg.cond(create_matrix(10, 5).toarray())
+
+#
+#method = 'Wolfe'
+#
+## большое число обусловленности
+#A = np.array([[1,1],[1,1]])
+## начальная точка не влияет на скорость сходимости
+#x_0 = np.array([2,2.])
+##first_exp(A, x_0, method)
+#
+#x_0 = np.array([-1.,-2.])
+#first_exp(A, x_0, method)
+#
+#
+## маленькое число обусловленности
+#A = np.array([[2,1],[1,1]])
+#x_0 = np.array([1.,2.])
+#first_exp(A, x_0, method, levels=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 1.5, 2, 4])
+#
