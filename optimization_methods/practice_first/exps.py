@@ -1,3 +1,5 @@
+# -*-coding: utf-8 -*-
+
 import numpy as np
 from numpy.linalg import LinAlgError
 import scipy as sp
@@ -119,36 +121,97 @@ def first_exp(A, x_0, method, b=np.zeros(2), levels=None):
 	)
 	plt.show()
 
-	print(np.linalg.cond(A.toarray()))
+#	print(np.linalg.cond(A.toarray()))
 
 
 def create_matrix(n, k):
-	d = np.random.randint(1, k, size=n)
+	d = np.random.uniform(1, k, size=n)
 	d[0] = 1
-	d[1] = k
+	d[-1] = k
 	return sp.sparse.spdiags(d, 0, d.size, d.size)
 
 
 
+def second_exp():
+	ns = [10, 100, 1000, 10000, 100000] # размерность пространства
+	ks = [5, 10, 30, 50, 80, 100, 150, 200, 350, 500, 700, 850, 1000] # обусловленость задачи
+	colors = ['b', 'g', 'r', 'c', 'y', 'k']
+	c_i = 0
+
+	for n in ns:
+		print(n)
+		res_steps = []
+		for i in range(3):
+			steps = []
+			for k in ks:
+				print(k)
+				A = create_matrix(n, k)
+				print('cond: ', np.linalg.cond(A.toarray()))
+				print('k:', k)
+				oracle = oracles.QuadraticOracle(A, np.array([0. for i in range(n)]))
+				x_0 = np.array([1. for i in range(n)])
+				method = 'Wolfe'
+	#			import pdb; pdb.set_trace()
+				[x_star, msg, history] = optimization.gradient_descent(
+				    oracle, x_0,
+				    trace=True,
+				    line_search_options={
+					'method': method,
+					'c1': 1e-4,
+					'c2': 0.3,
+					'c': 0.1
+				    }
+				)
+
+
+				steps.append(len(history['func']))
+
+			if (i == 0):
+				res_steps = steps
+			else:
+				for i in range(len(res_steps)):
+					res_steps[i] += steps[i]
+
+
+		for i in range(len(res_steps)):
+			res_steps[i] /= 10
+
+#		import pdb; pdb.set_trace()
+		plt.plot(ks, res_steps, linewidth=2.0, ms=7.0, alpha=0.5, c=colors[c_i], label='n=%d' % n)
+		c_i += 1
+
+	print("show")
+	plt.show()
+
+
+
+#------------------------------------------------------------------------
 #for k in [3, 10, 50, 100, 400, 700 , 1000]:
 #	A = create_matrix(2, k)
 #	x_0 = np.array([1,2.])
 #	first_exp(A, x_0, method)
+#------------------------------------------------------------------------
 
 
-A = create_matrix(2, 3)
-x_0 = np.array([1,2.])
+#------------------------------------------------------------------------
+#A = create_matrix(2, 3)
+#x_0 = np.array([1,2.])
+#
+#method = 'Wolfe'
+#first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
+#
+#
+#method = 'Armijo'
+#first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
+#
+#method = 'Constant'
+#first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
+#------------------------------------------------------------------------
 
-method = 'Wolfe'
-first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
 
-
-method = 'Armijo'
-first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
-
-method = 'Constant'
-first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
-
+#----------------------------------------------------------------------
+second_exp()
+#------------------------------------------------------------------------
 
 #import pdb; pdb.set_trace()
 #np.linalg.cond(create_matrix(10, 5).toarray())
@@ -156,7 +219,7 @@ first_exp(A, x_0, method, np.array([1.,1.]), levels=[0, 0.5, 1.5, 2, 4])
 #
 #method = 'Wolfe'
 #
-## большое число обусловленности
+## большое число обучсловленности
 #A = np.array([[1,1],[1,1]])
 ## начальная точка не влияет на скорость сходимости
 #x_0 = np.array([2,2.])
