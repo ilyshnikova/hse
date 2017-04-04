@@ -138,18 +138,24 @@ def second_exp():
 	colors = ['b', 'g', 'r', 'c', 'y', 'k']
 	c_i = 0
 
+	fig1 = plt.figure()
+	ax1 = fig1.add_subplot(111)
+
 	for n in ns:
 		print(n)
 		res_steps = []
-		for i in range(3):
+		for iteration in range(10):
 			steps = []
 			for k in ks:
 				print(k)
 				A = create_matrix(n, k)
-				print('cond: ', np.linalg.cond(A.toarray()))
-				print('k:', k)
-				oracle = oracles.QuadraticOracle(A, np.array([0. for i in range(n)]))
-				x_0 = np.array([1. for i in range(n)])
+				#print('cond: ', np.linalg.cond(A.toarray()))
+				#print('k:', k)
+#				oracle = oracles.QuadraticOracle(A, np.array([0. for i in range(n)]))
+#				x_0 = np.array([1. for i in range(n)])
+
+				oracle = oracles.QuadraticOracle(A, np.array([1. for i in range(n)]))
+				x_0 = np.array([0. for i in range(n)])
 				method = 'Wolfe'
 	#			import pdb; pdb.set_trace()
 				[x_star, msg, history] = optimization.gradient_descent(
@@ -162,28 +168,35 @@ def second_exp():
 					'c': 0.1
 				    }
 				)
-
-
 				steps.append(len(history['func']))
-
-			if (i == 0):
+			if (iteration == 0):
 				res_steps = steps
 			else:
 				for i in range(len(res_steps)):
 					res_steps[i] += steps[i]
 
+			ax1.plot(ks, steps, alpha=0.3, c=colors[c_i], ls='--')
 
 		for i in range(len(res_steps)):
 			res_steps[i] /= 10
 
 #		import pdb; pdb.set_trace()
-		plt.plot(ks, res_steps, linewidth=2.0, ms=7.0, alpha=0.5, c=colors[c_i], label='n=%d' % n)
+		ax1.plot(ks, res_steps, c=colors[c_i], label='n=%d' % n)
+#		plt.plot(ks, res_steps, linewidth=2.0, ms=7.0, alpha=0.5, c=colors[c_i], )
 		c_i += 1
 
 	print("show")
+#	colormap = plt.cm.gist_ncar #nipy_spectral, Set1,Paired
+#	colors = [colormap(i) for i in np.linspace(0, 1,len(ax1.lines))]
+#	for i,j in enumerate(ax1.lines):
+#		j.set_color(colors[i])
+#
+	ax1.legend(loc=2)
 	plt.show()
 
 
+def third_exp():
+	np.genfromtxt('w8a',delimiter=',')
 
 #------------------------------------------------------------------------
 #for k in [3, 10, 50, 100, 400, 700 , 1000]:
@@ -210,7 +223,7 @@ def second_exp():
 
 
 #----------------------------------------------------------------------
-second_exp()
+#second_exp()
 #------------------------------------------------------------------------
 
 #import pdb; pdb.set_trace()
@@ -234,3 +247,9 @@ second_exp()
 #x_0 = np.array([1.,2.])
 #first_exp(A, x_0, method, levels=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 1.5, 2, 4])
 #
+
+
+
+#----------------------------------------------------------------------
+third_exp()
+#----------------------------------------------------------------------
