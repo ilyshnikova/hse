@@ -79,12 +79,15 @@ class LogRegL2Oracle(BaseSmoothOracle):
 		matmat_ATsA : function
 			Computes matrix-matrix-matrix product A^T * Diag(s) * A,
 	"""
-	def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef):
+	def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef=None):
 		self.matvec_Ax = matvec_Ax
 		self.matvec_ATx = matvec_ATx
 		self.matmat_ATsA = matmat_ATsA
 		self.b = b
-		self.regcoef = regcoef
+		if regcoef is None:
+			self.regcoef = 1 / self.b.shape[0]
+		else:
+			self.regcoef = regcoef
 
 	def func(self, x):
 		return 1 / self.b.shape[0] * sum(np.logaddexp(0, -self.matvec_Ax(x) * self.b)) + self.regcoef / 2 * np.linalg.norm(x)**2.

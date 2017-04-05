@@ -190,13 +190,16 @@ def second_exp():
 #	colors = [colormap(i) for i in np.linspace(0, 1,len(ax1.lines))]
 #	for i,j in enumerate(ax1.lines):
 #		j.set_color(colors[i])
-#
+
 	ax1.legend(loc=2)
 	plt.show()
 
 
+from sklearn.datasets import load_svmlight_file
 def third_exp():
-	np.genfromtxt('w8a',delimiter=',')
+	data = load_svmlight_file('w8a.txt')
+
+
 
 #------------------------------------------------------------------------
 #for k in [3, 10, 50, 100, 400, 700 , 1000]:
