@@ -9,9 +9,8 @@ import scipy.optimize
 import sys
 import warnings
 
-import oracles
 import optimization
-import plot_trajectory_2d
+import oracles
 
 
 def test_python3():
@@ -23,7 +22,7 @@ def test_QuadraticOracle():
     #   f(x) = 1/2 x^T x - [1, 2, 3]^T x
     A = np.eye(3)
     b = np.array([1, 2, 3])
-    quadratic = QuadraticOracle(A, b)
+    quadratic = oracles.QuadraticOracle(A, b)
 
     # Check at point x = [0, 0, 0]
     x = np.zeros(3)
@@ -63,7 +62,7 @@ def check_log_reg(oracle_type, sparse=False):
     reg_coef = 0.5
 
     # Logistic regression oracle:
-    logreg = create_log_reg_oracle(A, b, reg_coef, oracle_type=oracle_type)
+    logreg = oracles.create_log_reg_oracle(A, b, reg_coef, oracle_type=oracle_type)
 
     # Check at point x = [0, 0]
     x = np.zeros(2)
@@ -132,32 +131,32 @@ def test_log_reg_oracle_calls():
 
     # Single func
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
+    oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 0})
 
     # Single grad
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad(x)
+    oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad(x)
     check_counters(counters, {'Ax': 1, 'ATx': 1, 'ATsA': 0})
 
     # Single hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).hess(x)
+    oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).hess(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 1})
 
     # Single func_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func_directional(x, d, 1)
+    oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func_directional(x, d, 1)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 0})
 
     # Single grad_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
+    oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
     check_counters(counters, {'Ax': 1, 'ATx': 1, 'ATsA': 0})
 
     # In a row: func + grad + hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.hess(x)
@@ -165,21 +164,21 @@ def test_log_reg_oracle_calls():
 
     # In a row: func + grad
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     check_counters(counters, {'Ax': 2, 'ATx': 1, 'ATsA': 0})
 
     # In a row: grad + hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.grad(x)
     oracle.hess(x)
     check_counters(counters, {'Ax': 2, 'ATx': 1, 'ATsA': 1})
 
     # In a row: func + grad + func_directional + grad_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.func_directional(x, d, 1)
@@ -190,7 +189,7 @@ def test_log_reg_oracle_calls():
 
     # In a row: func + grad + func_directional + grad_directional + (func + grad)
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2Oracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.func_directional(x, d, 1)
@@ -213,32 +212,32 @@ def test_log_reg_optimized_oracle_calls():
 
     # Single func
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
+    oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 0})
 
     # Single grad
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad(x)
+    oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad(x)
     check_counters(counters, {'Ax': 1, 'ATx': 1, 'ATsA': 0})
 
     # Single hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).hess(x)
+    oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).hess(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 1})
 
     # Single func_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func_directional(x, d, 1)
+    oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func_directional(x, d, 1)
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
 
     # Single grad_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
+    oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
 
     # In a row: func + grad + hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.hess(x)
@@ -246,21 +245,21 @@ def test_log_reg_optimized_oracle_calls():
 
     # In a row: func + grad
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     check_counters(counters, {'Ax': 1, 'ATx': 1, 'ATsA': 0})
 
     # In a row: grad + hess
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.grad(x)
     oracle.hess(x)
     check_counters(counters, {'Ax': 1, 'ATx': 1, 'ATsA': 1})
 
     # In a row: func + grad + func_directional + grad_directional
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.func_directional(x, d, 1)
@@ -271,7 +270,7 @@ def test_log_reg_optimized_oracle_calls():
 
     # In a row: func + grad + func_directional + grad_directional + (func + grad)
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-    oracle = LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
+    oracle = oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef)
     oracle.func(x)
     oracle.grad(x)
     oracle.func_directional(x, d, 1)
@@ -287,10 +286,8 @@ def test_grad_finite_diff_1():
     # Quadratic function.
     A = np.eye(3)
     b = np.array([1, 2, 3])
-    quadratic = QuadraticOracle(A, b)
-#    from nose.tools import set_trace; set_trace()
-
-    g = grad_finite_diff(quadratic.func, np.zeros(3))
+    quadratic = oracles.QuadraticOracle(A, b)
+    g = oracles.grad_finite_diff(quadratic.func, np.zeros(3))
     ok_(isinstance(g, np.ndarray))
     ok_(np.allclose(g, -b))
 
@@ -300,7 +297,7 @@ def test_grad_finite_diff_2():
     func = lambda x: x[0] ** 3 + x[1] ** 2
     x = np.array([2.0, 3.0])
     eps = 1e-5
-    g = grad_finite_diff(func, x, eps)
+    g = oracles.grad_finite_diff(func, x, eps)
     ok_(isinstance(g, np.ndarray))
     ok_(np.allclose(g, [12.0, 6.0], atol=1e-4))
 
@@ -309,8 +306,8 @@ def test_hess_finite_diff_1():
     # Quadratic function.
     A = np.eye(3)
     b = np.array([1, 2, 3])
-    quadratic = QuadraticOracle(A, b)
-    H = hess_finite_diff(quadratic.func, np.zeros(3))
+    quadratic = oracles.QuadraticOracle(A, b)
+    H = oracles.hess_finite_diff(quadratic.func, np.zeros(3))
     ok_(isinstance(H, np.ndarray))
     ok_(np.allclose(H, A))
 
@@ -320,7 +317,7 @@ def test_hess_finite_diff_2():
     func = lambda x: x[0] ** 3 + x[1] ** 2
     x = np.array([2.0, 3.0])
     eps = 1e-5
-    H = hess_finite_diff(func, x, eps)
+    H = oracles.hess_finite_diff(func, x, eps)
     ok_(isinstance(H, np.ndarray))
     ok_(np.allclose(H, [[12.0, 0.], [0., 2.0]], atol=1e-3))
 
@@ -330,7 +327,7 @@ def get_quadratic():
     #   f(x) = 1/2 x^T x - [1, 2, 3]^T x
     A = np.eye(3)
     b = np.array([1, 2, 3])
-    return QuadraticOracle(A, b)
+    return oracles.QuadraticOracle(A, b)
 
 
 def test_line_search():
@@ -339,27 +336,27 @@ def test_line_search():
     d = np.array([-1, 0, 0])
 
     # Constant line search
-    ls_tool = LineSearchTool(method='Constant', c=1.0)
+    ls_tool = optimization.LineSearchTool(method='Constant', c=1.0)
     assert_almost_equal(ls_tool.line_search(oracle, x, d, ), 1.0)
-    ls_tool = LineSearchTool(method='Constant', c=10.0)
+    ls_tool = optimization.LineSearchTool(method='Constant', c=10.0)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 10.0)
 
     # Armijo rule
-    ls_tool = LineSearchTool(method='Armijo', alpha_0=100, c1=0.9)
+    ls_tool = optimization.LineSearchTool(method='Armijo', alpha_0=100, c1=0.9)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 12.5)
 
-    ls_tool = LineSearchTool(method='Armijo', alpha_0=100, c1=0.9)
+    ls_tool = optimization.LineSearchTool(method='Armijo', alpha_0=100, c1=0.9)
     assert_almost_equal(ls_tool.line_search(oracle, x, d, previous_alpha=1.0), 1.0)
 
-    ls_tool = LineSearchTool(method='Armijo', alpha_0=100, c1=0.95)
+    ls_tool = optimization.LineSearchTool(method='Armijo', alpha_0=100, c1=0.95)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 6.25)
-    ls_tool = LineSearchTool(method='Armijo', alpha_0=10, c1=0.9)
+    ls_tool = optimization.LineSearchTool(method='Armijo', alpha_0=10, c1=0.9)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 10.0)
 
     # Wolfe rule
-    ls_tool = LineSearchTool(method='Wolfe', c1=1e-4, c2=0.9)
+    ls_tool = optimization.LineSearchTool(method='Wolfe', c1=1e-4, c2=0.9)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 16.0)
-    ls_tool = LineSearchTool(method='Wolfe', c1=1e-4, c2=0.8)
+    ls_tool = optimization.LineSearchTool(method='Wolfe', c1=1e-4, c2=0.8)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 32.0)
 
 
@@ -379,7 +376,7 @@ def check_equal_histories(history1, history2, atol=1e-3):
 
 
 def check_prototype(method):
-    class ZeroOracle2D(BaseSmoothOracle):
+    class ZeroOracle2D(oracles.BaseSmoothOracle):
         def func(self, x): return 0.0
 
         def grad(self, x): return np.zeros(2)
@@ -401,8 +398,6 @@ def check_prototype(method):
 
     check_result(method(oracle, x0))
     check_result(method(oracle, x0, 1e-3, 10))
-
-#    from nose.tools import set_trace; set_trace()
     check_result(method(oracle, x0, 1e-3, 10, {'method': 'Constant', 'c': 1.0}))
     check_result(method(oracle, x0, 1e-3, 10, {'method': 'Constant', 'c': 1.0},
                         trace=True), history=HISTORY)
@@ -447,18 +442,19 @@ def check_one_ideal_step(method):
 
 
 def test_gd_basic():
-    check_prototype(gradient_descent)
-    check_one_ideal_step(gradient_descent)
+    check_prototype(optimization.gradient_descent)
+    check_one_ideal_step(optimization.gradient_descent)
+
 
 def test_newton_basic():
-    check_prototype(newton)
-    check_one_ideal_step(newton)
+    check_prototype(optimization.newton)
+    check_one_ideal_step(optimization.newton)
 
 
 def get_1d(alpha):
     # 1D function:
     #   f(x) = exp(alpha * x) + alpha * x^2
-    class Func(BaseSmoothOracle):
+    class Func(oracles.BaseSmoothOracle):
         def __init__(self, alpha):
             self.alpha = alpha
 
@@ -503,9 +499,7 @@ def test_gd_1d():
                     'time': TIME,
                     'x': X}
     # Armijo rule.
-
-#    from nose.tools import set_trace; set_trace()
-    [x_star, msg, history] = gradient_descent(
+    [x_star, msg, history] = optimization.gradient_descent(
         oracle, x0,
         max_iter=5,
         tolerance=1e-10,
@@ -518,10 +512,9 @@ def test_gd_1d():
     )
     ok_(np.allclose(x_star, [-0.4077], atol=1e-3))
     eq_(msg, 'success')
-
     check_equal_histories(history, TRUE_HISTORY)
     # Constant step size.
-    [x_star, msg, history] = gradient_descent(oracle, x0,
+    [x_star, msg, history] = optimization.gradient_descent(oracle, x0,
                                                            max_iter=5, tolerance=1e-10, trace=False,
                                                            line_search_options={
                                                                'method': 'Constant',
@@ -555,7 +548,7 @@ def test_newton_1d():
                     'time': TIME,
                     'x': X}
     # Constant step size.
-    [x_star, msg, history] = newton(
+    [x_star, msg, history] = optimization.newton(
         oracle, x0,
         max_iter=5, tolerance=1e-10, trace=True,
         line_search_options={
@@ -569,7 +562,7 @@ def test_newton_1d():
 
 def test_newton_fail():
     # f(x) = integral_{-infty}^x arctan(t) dt
-    class Oracle(BaseSmoothOracle):
+    class Oracle(oracles.BaseSmoothOracle):
         def func(self, x):
             return x * np.arctan(x) - 0.5 * np.log(np.power(x, 2) + 1)
 
@@ -581,121 +574,10 @@ def test_newton_fail():
 
     x0 = np.array([10.0])
     warnings.filterwarnings("ignore")
-    [x_star, msg, history] = newton(Oracle(), x0,
+    [x_star, msg, history] = optimization.newton(Oracle(), x0,
                                                  display=False, trace=False,
                                                  line_search_options={'method': 'Constant', 'c': 1})
     warnings.filterwarnings("default")
     eq_(msg, 'newton_direction_error')
     eq_(history, None)
-
-
-#A = np.array([[1., 2.], [2., 5.]])
-#oracle = QuadraticOracle(A, np.zeros(2))
-#[x_star, msg, history] = gradient_descent(
-#    oracle, np.array([3., 2.]),
-#    trace=True,
-#    line_search_options={
-#        'method': 'Wolfe',
-#        'c1': 1e-4,
-#        'c2': 0.3
-#    }
-#)
-#print(len(history['func']))
-#
-
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import math
-
-def plot_levels(func, xrange=None, yrange=None, levels=None):
-    """
-    Plotting the contour lines of the function.
-
-    Example:
-    --------
-    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
-    >> plot_levels(oracle.func)
-    """
-    if xrange is None:
-        xrange = [-6, 6]
-    if yrange is None:
-        yrange = [-5, 5]
-    if levels is None:
-        levels = [0, 0.25, 1, 4, 9, 16, 25]
-
-    x = np.linspace(xrange[0], xrange[1], 100)
-    y = np.linspace(yrange[0], yrange[1], 100)
-    X, Y = np.meshgrid(x, y)
-    Z = np.zeros(X.shape)
-    for i in range(Z.shape[0]):
-        for j in range(Z.shape[1]):
-            Z[i, j] = func(np.array([X[i, j], Y[i, j]]))
-
-#    CS = plt.contourf(X, Y, Z, levels=levels)
-#    plt.clabel(CS, inline=1, fontsize=8)
-    contour = plt.contour(X, Y, Z, levels, colors='k')
-    plt.clabel(contour, colors = 'k', fmt = '%2.1f', fontsize=12)
-    cmap = plt.cm.get_cmap('YlGnBu')
-    contour_filled = plt.contourf(X, Y, Z, levels, cmap=cmap, alpha=0.5)
-    plt.colorbar(contour_filled)
-
-    plt.grid()
-
-
-def plot_trajectory(func, history, fit_axis=False, label=None):
-    """
-    Plotting the trajectory of a method.
-    Use after plot_levels(...).
-
-    Example:
-    --------
-    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
-    >> [x_star, msg, history] = gradient_descent(oracle, np.array([3.0, 1.5], trace=True)
-    >> plot_levels(oracle.func)
-    >> plot_trajectory(oracle.func, history['x'])
-    """
-    x_values, y_values = zip(*history)
-    x_values = np.array(x_values)
-    y_values = np.array(y_values)
-
-
-    plt.quiver(x_values[:-1], y_values[:-1], x_values[1:] - x_values[:-1], y_values[1:]-y_values[:-1], scale_units='xy', angles='xy', scale=1, linewidth=0.1)
-
-    if fit_axis:
-        xmax, ymax = np.max(x_values), np.max(y_values)
-        COEF = 1.5
-        xrange = [-xmax * COEF, xmax * COEF]
-        yrange = [-ymax * COEF, ymax * COEF]
-        plt.xlim(xrange)
-        plt.ylim(yrange)
-
-
-#plot_levels(oracle.func)
-#plot_trajectory(oracle.func, history['x'])
-#
-#plt.show()
-
-A = np.array([[10., 20.], [20., 5.]])
-method = 'Wolfe'
-
-oracle = oracles.QuadraticOracle(A, np.zeros(2))
-[x_star, msg, history] = optimization.gradient_descent(
-    oracle, np.array([3., 2.]),
-    trace=True,
-    line_search_options={
-        'method': method,
-        'c1': 1e-4,
-        'c2': 0.3
-    }
-)
-
-plot_levels(oracle.func)
-plot_trajectory(oracle.func, history['x'], fit_axis=True)
-
-plt.title('gradient descent with %s linear search, steps: %d\n for Quadratic function with\n A = %s' % (method, len(history['x']), str(A)))
-plt.show()
-
-print(np.linalg.cond(A))
 

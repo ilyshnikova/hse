@@ -3,7 +3,7 @@ from numpy.linalg import LinAlgError
 import scipy as sp
 from datetime import datetime
 from collections import defaultdict
-
+import time
 
 class LineSearchTool(object):
 	"""
@@ -71,7 +71,7 @@ class LineSearchTool(object):
 			return oracle.func_directional(x_k, d_k, alpha)
 
 		while (phi(alpha) > phi(0) + c * alpha * oracle.grad_directional(x_k, d_k, 0)):
-			alpha = alpha / 2
+			alpha /= 2
 
 		"""
 		Finds the step size alpha for a given starting point x_k
@@ -168,10 +168,10 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 	x_k = np.array(np.copy(x_0))
 	iter_number = 0
 	message = "success"
-	now = datetime.now()
+	now = time.time()
 
 	if history is not None:
-		history['time'] += [datetime.now() - now]
+		history['time'] += [time.time() - now]
 		history['func'] += [oracle.func(x_k)]
 		history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
 		if x_k.size <= 2:
@@ -197,11 +197,14 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 		x_k += d_k * alpha
 
 		if history is not None:
-			history['time'] += [datetime.now() - now]
+			history['time'] += [time.time() - now]
 			history['func'] += [oracle.func(x_k)]
 			history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
 			if x_k.size <= 2:
 				history['x'].append(np.copy(x_k))
+#		if display:
+#			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
+
 		if  np.isnan(x_k).all() or not np.isfinite(x_k).all():
 			message = "computational_error"
 			break
@@ -267,17 +270,17 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
 	x_k = np.array(np.copy(x_0))
 	iter_number = 0
 	message = "success"
-	now = datetime.now()
+	now = time.time()
 
 	if history is not None:
-		history['time'] += [datetime.now() - now]
+		history['time'] += [time.time() - now]
 		history['func'] += [oracle.func(x_k)]
 		history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
 		if x_k.size <= 2:
 			history['x'] += [np.copy(x_k)]
-
 	if display:
 		print('x_k: {0}'.format(x_k))
+
 
 	while (np.linalg.norm(oracle.grad(x_k))**2 > tolerance * np.linalg.norm(oracle.grad(x_0))**2):
 		if not np.isfinite(x_k.all()):
@@ -300,9 +303,14 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
 		x_k += d_k * alpha
 
 		if history is not None:
-			history['time'] += [datetime.now() - now]
+			history['time'] += [time.time() - now]
 			history['func'] += [oracle.func(x_k)]
 			history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
 			if x_k.size <= 2:
 				history['x'].append(np.copy(x_k))
+#		if display:
+#			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
+
+
+
 	return x_k, message, history

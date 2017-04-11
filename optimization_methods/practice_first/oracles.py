@@ -90,14 +90,18 @@ class LogRegL2Oracle(BaseSmoothOracle):
 			self.regcoef = regcoef
 
 	def func(self, x):
-		return 1 / self.b.shape[0] * sum(np.logaddexp(0, -self.matvec_Ax(x) * self.b)) + self.regcoef / 2 * np.linalg.norm(x)**2.
+		return 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), -self.b * self.matvec_Ax(x))) + self.regcoef * 0.5 * x.dot(x)
 
 	def grad(self, x):
-		return 1 / self.b.shape[0] * self.matvec_ATx(- self.b * (1 - expit(self.b * self.matvec_Ax(x)))) + self.regcoef * x
+		return (-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(-1 * self.b * self.matvec_Ax(x)) * self.b) + self.regcoef * x
+#1 / self.b.shape[0] * self.matvec_ATx(- self.b * (1 - expit(self.b * self.matvec_Ax(x)))) + self.regcoef * x
 
 	def hess(self, x):
-		exp = expit(self.matvec_Ax(x) * self.b)
-		return 1 / self.b.shape[0] * self.matmat_ATsA((1 - exp) * exp) + self.regcoef * np.identity(x.shape[0])
+#		exp = expit(self.matvec_Ax(x) * self.b)
+#		return 1 / self.b.shape[0] * self.matmat_ATsA((1 - exp) * exp) + self.regcoef * np.identity(x.shape[0])
+		Ax = self.matvec_Ax(x)
+		return (1.0/self.b.shape[0]) * self.matmat_ATsA(scipy.special.expit(Ax * self.b) * scipy.special.expit(-Ax * self.b)) + \
+			self.regcoef * np.identity(x.shape[0])
 
 
 class LogRegL2OptimizedOracle(LogRegL2Oracle):
@@ -121,7 +125,7 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
 		return None
 
 
-def create_log_reg_oracle(A, b, regcoef, oracle_type='usual'):
+def create_log_reg_oracle(A, b, regcoef=None, oracle_type='usual'):
 	"""
 	Auxiliary function for creating logistic regression oracles.
 		`oracle_type` must be either 'usual' or 'optimized'

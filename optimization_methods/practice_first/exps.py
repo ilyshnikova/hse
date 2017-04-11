@@ -197,9 +197,58 @@ def second_exp():
 
 from sklearn.datasets import load_svmlight_file
 def third_exp():
-	data = load_svmlight_file('w8a.txt')
+	A, b = load_svmlight_file('w8a.txt')#real-sim')#'gisette_scale')#'w8a.txt')
+	logr = oracles.create_log_reg_oracle(A, b, 1/len(b))
+	hists = dict()
+	method = 'Wolfe'
+	for opt, label in zip([optimization.gradient_descent, optimization.newton], ["Grad", "Newton"]):
+		x_star, msg, history = opt(
+						logr,
+						np.zeros(A.shape[1]),
+						trace=True,
+				    		line_search_options={
+							'method': method,
+							'c1': 1e-4,
+							'c2': 0.3,
+							'c': 0.9
+				    		},
+						display=True
+					)
+		hists[label] = history
+
+	print("---------------------------------------- data ----------------------------------------")
+
+	print("x: ", hists["Grad"]['time'])
+
+	print("y: ", hists["Grad"]['func'])
+
+	print("---------------------------------------- data ----------------------------------------")
+	print("---------------------------------------- data ----------------------------------------")
+
+	print("x: ", hists["Newton"]['time'])
+
+	print("y: ", hists["Newton"]['func'])
+
+	print("---------------------------------------- data ----------------------------------------")
 
 
+	plt.plot(hists["Grad"]['time'], hists["Grad"]['func'], color='b', label="Gradient")
+	plt.plot(hists["Newton"]['time'], hists["Newton"]['func'], color='g', label="Newton")
+	plt.xlabel('Secs')
+	plt.ylabel('func val')
+	plt.legend(loc=2)
+	print("show")
+	plt.show()
+
+	df_0 = np.linalg.norm(logr.grad(np.zeros(A.shape[1])))**2
+	r_k_gd = np.vectorize(lambda x: math.log(np.linalg.norm(x**2)/df_0))(hists['Grad']['grad_norm'])
+	r_k_new = np.vectorize(lambda x: math.log(np.linalg.norm(x**2)/df_0))(hists['Newton']['grad_norm'])
+	plt.plot(hists["Grad"]['time'], r_k_gd, color='b')
+	plt.plot(hists["Newton"]['time'], r_k_new, color='g')
+	plt.xlabel('Secos')
+	plt.ylabel('ln(r_k)')
+	print("show")
+	plt.show()
 
 #------------------------------------------------------------------------
 #for k in [3, 10, 50, 100, 400, 700 , 1000]:
