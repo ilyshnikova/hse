@@ -581,3 +581,7 @@ def test_newton_fail():
     eq_(msg, 'newton_direction_error')
     eq_(history, None)
 
+print('run test')
+test_log_reg_optimized()
+print('finish test')
+

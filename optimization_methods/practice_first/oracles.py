@@ -94,11 +94,8 @@ class LogRegL2Oracle(BaseSmoothOracle):
 
 	def grad(self, x):
 		return (-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(-1 * self.b * self.matvec_Ax(x)) * self.b) + self.regcoef * x
-#1 / self.b.shape[0] * self.matvec_ATx(- self.b * (1 - expit(self.b * self.matvec_Ax(x)))) + self.regcoef * x
 
 	def hess(self, x):
-#		exp = expit(self.matvec_Ax(x) * self.b)
-#		return 1 / self.b.shape[0] * self.matmat_ATsA((1 - exp) * exp) + self.regcoef * np.identity(x.shape[0])
 		Ax = self.matvec_Ax(x)
 		return (1.0/self.b.shape[0]) * self.matmat_ATsA(scipy.special.expit(Ax * self.b) * scipy.special.expit(-Ax * self.b)) + \
 			self.regcoef * np.identity(x.shape[0])
@@ -111,19 +108,50 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
 
 	For explanation see LogRegL2Oracle.
 	"""
-	def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef):
+	def __init__(self, matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef=None):
 		super().__init__(matvec_Ax, matvec_ATx, matmat_ATsA, b, regcoef)
+		self.Abx = None
+		self.last_x = None
+		self.last_d = None
+
+
+	def store_x(self, x):
+		if not np.array_equal(self.last_x, x):
+			self.last_x = x
+			self.Abx = (-self.b) * self.matvec_Ax(x)
+
+	def store_d(self, d):
+		if not np.array_equal(self.last_d, d):
+			self.last_d = d
+			self.Abd = (-self.b) * self.matvec_Ax(d)
+
+	def func(self, x, store=True):
+		self.store_x(x)
+		return 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), self.Abx)) + self.regcoef * 0.5 * x.dot(x)
+
+	def grad(self, x, store=True):
+		self.store_x(x)
+		return (-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(self.Abx) * self.b) + self.regcoef * x
+
+	def hess(self, x):
+		self.store_x(x)
+		return (1.0/self.b.shape[0]) * self.matmat_ATsA(scipy.special.expit(-self.Abx) * scipy.special.expit(self.Abx)) + \
+			self.regcoef * np.identity(x.shape[0])
 
 	def func_directional(self, x, d, alpha):
-
-
-		# TODO: Implement optimized version with pre-computation of Ax and Ad
-		return None
+		self.store_x(x)
+		self.store_d(d)
+		v = self.Abx + alpha * self.Abd
+		x = x + alpha * d
+		return 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), v)) + self.regcoef * 0.5 * x.dot(x)
 
 	def grad_directional(self, x, d, alpha):
-		# TODO: Implement optimized version with pre-computation of Ax and Ad
-		return None
+		self.store_x(x)
+		self.store_d(d)
+		v = self.Abx + alpha * self.Abd
+		x = x + alpha * d
 
+		return ((-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(v) * self.b) + self.regcoef * x).dot(d)
 
 def create_log_reg_oracle(A, b, regcoef=None, oracle_type='usual'):
 	"""

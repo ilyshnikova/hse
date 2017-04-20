@@ -1,0 +1,4 @@
+#!/bin/bash
+
+$HOME/setup-perl-debug-user yabs
+$HOME/setup-perl-debug-user root

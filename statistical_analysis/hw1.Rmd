@@ -1,0 +1,179 @@
+---
+title: "ДЗ1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Царькова Анастасия Олеговна 142 группа 1ДЗ
+
+Определим константы
+
+```{r}
+library(fields)
+SAMPLE_SIZE = 50
+P_PARAMS = seq(1, 0, by=-0.05)
+MU_PARAMS = seq(0, 1, by=0.05)
+P_MU_GRID = expand.grid(p = P_PARAMS, mu = MU_PARAMS)
+
+P_VALUE_EXPERIMENTS = 50
+ALPHA_ERRORS_EXPERIMENTS = 10
+```
+
+Рассчитываем средние p_value и средние количаства отвержений гипотезы
+
+```{r}
+decline_sums = p_values_sums = rep(0, nrow(P_MU_GRID))
+for (i in 1:P_VALUE_EXPERIMENTS) {
+	norm_samples_list =
+		split(
+			matrix(
+				P_MU_GRID$p * rnorm(SAMPLE_SIZE * nrow(P_MU_GRID), mean = P_MU_GRID$mu, sd = 1)
+				+ (1 - P_MU_GRID$p) * (rexp(SAMPLE_SIZE * nrow(P_MU_GRID), rate = 2) - 0.5 + P_MU_GRID$mu),
+				nrow = nrow(P_MU_GRID)
+			),
+			1:nrow(P_MU_GRID)
+		)
+
+	p_values = unlist(lapply(norm_samples_list, function(samples) wilcox.test(samples)$p.value))
+
+	p_values_sums = p_values_sums + p_values
+	decline_sums = decline_sums + (p_values <= 0.05)
+}
+
+average_p_values = matrix(p_values_sums / P_VALUE_EXPERIMENTS, nrow = length(P_PARAMS), ncol = length(MU_PARAMS))
+powers = matrix(decline_sums / P_VALUE_EXPERIMENTS, nrow = length(P_PARAMS), ncol = length(MU_PARAMS))
+```
+
+
+1) График средних p-value по mu при выполнении условия симметричности 
+
+
+```{r}
+par(mfrow=c(1,1))
+plot(
+	MU_PARAMS,
+	average_p_values[1,],
+	col="green",
+	type="l",
+	xlab=expression(mu),
+	ylab="Average p-value",
+	main="",
+	ylim=c(0,1)
+)
+legend("topright", "Wilcox", lty=c(1,1), col="green")
+grid()
+```
+
+
+В районе mu = 0 график принимает большое значение, что означает, что гипотеза не будет ответгнута. Чем дальше mu от нуля, тем меньше p. Оно довольно быстро сходится к нулю, что означает, что уже при mu > 0.6 гипотеза равенства средненго нулю будет отвергаться, что соответствует истине.
+
+
+2) График мощности при выполнении условия симметричности
+
+
+```{r}
+par(mfrow=c(1,1))
+plot(
+	MU_PARAMS,
+	powers[1,],
+	col="green",
+	type="l",
+	xlab=expression(mu),
+	ylab="Estimated power",
+	main="",
+	ylim=c(0,1)
+)
+legend("topright", "Wilcox", lty=c(1,1), col="green")
+grid()
+```
+
+
+Поскольку это график мощности, нас интересуют только значения где mu > 0 ( само значение mu = 0 не соответствует тому, что гипотеза неверна ). Видно, что после mu > 0.6 гипотеза отвегается очень хорошо. В диапазоне от 0 до 0.55 критерий не может точно сказать, равно средее нулю в модели или нет. Это плохая область его применения.
+
+
+
+3) Рисуем графики для всех пар параметров (p, mu) для анализа устойчивости при потере условия p = 1
+
+```{r}
+par(mfrow=c(1,1))
+image.plot(
+	matrix(P_MU_GRID$p, nrow=length(P_PARAMS), ncol=length(MU_PARAMS)),
+	matrix(P_MU_GRID$mu, nrow=length(P_PARAMS), ncol=length(MU_PARAMS)),
+	average_p_values,
+	col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+	main="Wilcox Test p-values",
+	xlab=expression(p),
+	ylab=expression(mu)
+)
+```
+
+
+Видно, что даже при плавающих значениях параметра p, когда выборка теряет симметричность, критерий все равно продолжает хорошо отвергать для больших значений mu, а для маленьких значений mu принимать гипотезу. При движении вдоль p, до p > 0.4 критерий даже улучшается -- больше значений mu > 0 отвергается. После p < 0.4 критерий становится немного хуже: принимается больший диапазон неверных значений mu > 0, при этом даже при p близких к 0 (далеких от 1) мы уже начинаем отвергать значения mu, близкие к 0 (там становится меньше p-value), что совсем плохо.
+
+
+4) График всех значений мощности
+
+```{r}
+image.plot(
+	matrix(P_MU_GRID$p, nrow=length(P_PARAMS), ncol=length(MU_PARAMS)),
+	matrix(P_MU_GRID$mu, nrow=length(P_PARAMS), ncol=length(MU_PARAMS)),
+	powers,
+	col = colorRampPalette(c("blue", "cyan", "yellow", "red"))(1024),
+	main="Wilcox Test powers",
+	xlab=expression(p),
+	ylab=expression(mu)
+)
+
+```
+
+
+Выводы такие же, как выше: видна усточивость при p > 0.4
+
+
+5) Заново рассчитываем отклонения, но только для случая, когда среднее равно 0 (гипотеза верна), чтобы посчитать среднее число ошибок первого рода (гипотеза верна, но мы ее отклонили)
+
+
+```{r}
+error_decline_sums = rep(0, length(P_PARAMS))
+
+for (i in 1:ALPHA_ERRORS_EXPERIMENTS) {
+	norm_samples_list =
+		split(
+			matrix(
+				P_PARAMS * rnorm(SAMPLE_SIZE * length(P_PARAMS), mean = 0, sd = 1)
+				+ (1 - P_PARAMS) * (rexp(SAMPLE_SIZE * length(P_PARAMS), rate = 2) - 0.5),
+				nrow = length(P_PARAMS)
+			),
+			1:length(P_PARAMS)
+		)
+
+	p_values = unlist(lapply(norm_samples_list, function(samples) wilcox.test(samples)$p.value))
+
+	error_decline_sums = error_decline_sums + (p_values <= 0.05)
+}
+
+average_error_declines = error_decline_sums / ALPHA_ERRORS_EXPERIMENTS
+par(mfrow=c(1,1))
+plot(
+	P_PARAMS,
+	average_error_declines,
+	col="green",
+	type="l",
+	xlab=expression(p),
+	ylab="Type I error frequency",
+	main="",
+)
+legend("topright", "Wilcox", lty=c(1,1), col="green")
+```
+
+
+График ошибок первого рода при изменении парамера p, влияюшего на симметричность
+
+Тут мы видим разрез общего двумерного графика при mu = 0. Как мы уже раньше заметили, при p около нуля и mu около нуля, p-value начало падать. Тут это заметно гораздо лучше: при p < 0.4 число ошибок первого рода совсем сбилось, критерий стал плохо работать в этой области
+
+Общий вывод:
+
+Критерий все-таки лучше применять когда выборка симметрична, но при небольших отклонениях от симметричности он тоже работает очень хорошо, устойчиво. А при сильных отклонениях от симметричности, появляются как ошибки первого рода, так и ошибки второго рода.

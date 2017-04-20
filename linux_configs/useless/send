@@ -1,0 +1,95 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use POSIX qw(strftime);
+use Net::Address::IP::Local;
+
+use Yabs::Logger;
+use Yabs::Funcs;
+
+sub get_parent_pid {
+	my $pid = shift;
+
+	my $result_pid = `ps -o ppid= -p $pid`;
+
+	$result_pid =~ s/\D//g;
+	chomp($result_pid);
+
+	return $result_pid;
+}
+
+sub get_screen_name_by_pid {
+	my $pid = shift;
+
+	my $screen_name = `ps -p $pid -o args  | grep -E -i 'screen.*rds'  | awk '{print \$3;}'`;
+
+	chomp($screen_name);
+
+	return $screen_name;
+}
+
+sub get_current_screen {
+	my $pid = $$;
+	my $screen_name = undef;
+
+	while (!$screen_name) {
+		$screen_name = get_screen_name_by_pid($pid);
+		$pid = get_parent_pid($pid);
+	}
+	return $screen_name;
+}
+
+sub get_hostname {
+	my $hostname = `hostname -f`;
+
+	chomp($hostname);
+
+	return $hostname;
+}
+
+sub send_message {
+	my $message = shift;
+
+	system("/usr/bin/python ~/send_by_jabber.py olegts\@yandex-team.ru '$message'");
+}
+
+sub get_user_name {
+	my $username = `whoami`;
+	chomp($username);
+	return $username;
+}
+
+sub send_letter {
+	my $message = shift;
+
+	SendEmail(
+		"Stopped at " . strftime("%Y-%m-%d %H:%M:%S", localtime(time())),
+		"Screen $message stopped",
+		"olegtsts\@gmail.com",
+		'no',
+		'text/html; charset=UTF-8'
+	)
+	or return N_ERROR "failed to send mail";
+
+	return 1;
+}
+
+
+my $user = get_user_name();
+my $hostname = Net::Address::IP::Local->public_ipv4();
+my $screen_name = get_current_screen();
+
+my $message = strftime("%Y/%M/%d %H:%M:%S", localtime(time())) . " :: $screen_name :: $hostname :: http://localhost:8080?host=$hostname\&user=$user\&screen=$screen_name";
+my $test = shift;
+
+if (defined($test) && $test eq 'test') {
+	print "$message\n";
+} elsif (defined($test) && $test eq 'email') {
+	send_letter($message);
+	send_message($message);
+} else {
+	send_message($message);
+}
+

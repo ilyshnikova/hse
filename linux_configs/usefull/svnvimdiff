@@ -1,0 +1,1 @@
+exec /usr/bin/vimdiff -R ${6} ${7}

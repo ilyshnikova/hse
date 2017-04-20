@@ -1,0 +1,308 @@
+---
+title: "Tsarkova Anastasiya HW 3"
+author: "Царькова Анастасия"
+date: '3 декабря 2016 г '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r cars}
+library(mfp)
+library(lattice)
+library(AUC)
+library(plyr)
+library(MASS)
+library(lmtest)
+library(sandwich)
+library(mvtnorm)
+library(car)
+library(caret)
+```
+
+
+Попарные диаграммы рассеяния всех количественных признаков:
+
+
+```{r}
+wine_data = read.csv('wine.csv')
+
+colnames(wine_data) = c("X","type","constant_acidity","acetic_acidity","critic_acid_amount","residual_sugar","chlorides","free_sulfur_dioxide","total_sulfur_dioxide","density","pH","sulphates","alcohol","grade")
+
+wine_data$X = NULL
+wine_data$type = as.integer(wine_data$type == "красное")
+
+panel.hist <- function(x, ...){
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks; nB <- length(breaks)
+    y <- h$counts; y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col = "red", ...)
+}
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...){
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
+mycol <- rgb(30,30,30,100,maxColorValue=255)
+
+panel.dots <- function(x, y, ...){
+  points(x, y, pch=19, col=mycol)
+}
+wine_data$below_grade = as.integer(wine_data$grade < 6)
+wine_data$above_grade = as.integer(wine_data$grade > 6)
+wine_data$grade = NULL
+
+pairs(wine_data[,c("constant_acidity","acetic_acidity","critic_acid_amount","residual_sugar","chlorides","free_sulfur_dioxide","total_sulfur_dioxide","density","pH","sulphates","alcohol")], diag.panel=panel.hist,upper.panel = panel.cor, lower.panel = panel.dots)
+```
+
+Видна корелляция между содержанием алкоголя и плотностью.
+
+
+Посмотрим на распределение занчений целевой переменной.
+
+```{r}
+
+
+#par(mfrow=c(1,2))
+hist(wine_data$alcohol, col="red", main="", xlab="alcohol", breaks=50)
+
+
+```
+
+Видно что оно не очень нормальное -- надо примениить преобразование отклика методом Бокса-Кокса. Кроме того, сразу видим, что имеется выброс с максимальным значением по признаку алкогольности, выбросим его сразу перед применением преобразования.
+
+После этих действий, снова построим распределение преобразованной алкогольности. 
+
+```{r}
+wine_data = subset(wine_data, wine_data$alcohol != 14.9) # удаляем как выброс
+wine_data$alcohol = predict(BoxCoxTrans(wine_data$alcohol), wine_data$alcohol)
+hist(wine_data$alcohol, col="red", main="", xlab="alcohol", breaks=50)
+
+```
+
+После применения преобразования распределение стало больше похоже на нормальное. 
+
+Теперь построим линейную модель по всем признакам:
+
+```{r}
+#Создание модели
+m1 = lm(alcohol ~., data=wine_data)
+
+##Значимость признаков
+
+get_multi_hyotesys_corrected_p_value = function(m, EstType){
+  beta  = coef(m)[-1]
+  Vbeta = vcovHC(m, type = EstType)[-1,-1]
+  D = diag(1 / sqrt(diag(Vbeta)))
+  t = D %*% beta
+  Cor = D %*% Vbeta %*% t(D)
+  m.df = length(m$residuals) - length(beta)
+  p_adj = sapply(abs(t), function(x) 1-pmvt(-rep(x, length(beta)), rep(x, length(beta)), corr = Cor, df = m.df))
+  c(NaN, p_adj)
+}
+
+s1 <-summary(m1)
+s1$coefficients <- cbind(s1$coefficients, get_multi_hyotesys_corrected_p_value(m1, "HC0"))
+dimnames(s1$coefficients)[[2]][5] <- "Adjusted p-value"
+s1
+
+```
+
+
+
+```{r, echo=FALSE}
+
+## QQ - график
+addtrend = function(x, y){
+  y = y[order(x)]
+  x = sort(x)
+  lines(x, predict(loess(y ~ x)), col = "red")
+}
+```
+
+
+Для отсева выбросов строим график расстояния Кука.
+
+```{r}
+##Расстояние кука
+
+plot(fitted(m1), cooks.distance(m1), xlab="Fitted alcohol", ylab="Cook's distance")
+lines(c(0,100), c(0.015, 0.015), col="red")
+plot(wine_data$alcohol, cooks.distance(m1), xlab="alcohol", ylab="Cook's distance")
+lines(c(0,100), c(0.015, 0.015), col="red")
+```
+
+
+Видим выбросы и пытаемся отфильтровать их по расстоянию кука, построив после этого снова графиик расстояния Кука для новой модели.
+
+
+```{r, echo=FALSE}
+
+#Выкидывание точек с большим расстоянием Кука
+wine_data = wine_data[cooks.distance(m1)<0.0001,]
+m1 = lm(alcohol ~., data=wine_data)
+print(nrow(wine_data))
+
+##Еще раз нарисовали расстояние кука
+plot(fitted(m1), cooks.distance(m1), xlab="Fitted alcohol", ylab="Cook's distance")
+lines(c(0,100), c(0.015, 0.015), col="red")
+plot(wine_data$alcohol, cooks.distance(m1), xlab="alcohol", ylab="Cook's distance")
+lines(c(0,100), c(0.015, 0.015), col="red")
+
+```
+
+Теперь можно считать, что выбросов нет.
+
+Построим значения трех критериев для остатков модели.
+
+Критерий     | p  
+----------   | ---------
+Шапиро-Уилка | `r shapiro.test(residuals(m1))$p.value`
+Уилкоксона   | `r wilcox.test(residuals(m1))$p.value`
+Бройша-Пагана| `r bptest(m1)$p.value`
+
+Остатки ненормальны и гетероскедастичны, поэтому оценку значимости признаков будем делать с дисперсиями Уайта. Также будем делать поправку на множественность.
+
+Посмотрим на графики остатков и попытаемся найти квадратичные зависимости:
+```{r, echo=FALSE}
+## QQ - график
+
+qqnorm(residuals(m1))
+qqline(residuals(m1), col="red")
+grid()
+
+
+##Графики ошибок
+#par(mfrow=c(10,2))
+plot(1:dim(wine_data)[1], rstandard(m1), xlab="i", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(1:dim(wine_data)[1], rstandard(m1))
+grid()
+
+plot(fitted(m1), rstandard(m1), xlab="Fitted values", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(fitted(m1), rstandard(m1))
+grid()
+
+
+for (col_name in colnames(wine_data)) {
+	if (col_name != "alcohol") {
+		plot(wine_data[,col_name], rstandard(m1), xlab=col_name, ylab="Standardized residuals", col=mycol, pch=19)
+		addtrend(wine_data[,col_name], rstandard(m1))
+		grid()
+	}
+}
+
+```
+
+Видим, что у признаков residual_sugar и chlorides тренды зависимостей похожи на квадратичные, поэтому добавим это в новую модель.
+
+```{r}
+m2 <- lm(alcohol ~ . + I(residual_sugar^2) + I(chlorides^2) , data=wine_data)
+```
+
+Произведем сравнение моделей по критерию Вальда с дисперсиями Уайта:
+
+```{r}
+
+#Сравнение моделей
+waldtest(m2, m1, vcov = vcovHC(m2, type = "HC0"))
+```
+
+Модель получилась значимо лучше.
+
+Вот графики ошибок новой модели:
+
+```{r}
+
+##Графики ошибок
+plot(1:dim(wine_data)[1], rstandard(m2), xlab="i", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(1:dim(wine_data)[1], rstandard(m2))
+grid()
+
+plot(fitted(m2), rstandard(m2), xlab="Fitted values", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(fitted(m2), rstandard(m2))
+grid()
+
+
+for (col_name in colnames(wine_data)) {
+	if (col_name != "alcohol") {
+		plot(wine_data[,col_name], rstandard(m2), xlab=col_name, ylab="Standardized residuals", col=mycol, pch=19)
+		addtrend(wine_data[,col_name], rstandard(m2))
+		grid()
+	}
+}
+
+```
+
+
+Посмотрим на значимость признаков полученной модели, не забывая про поправку на множественность:
+
+```{r}
+##Значимость признаков второй модели
+s1 =summary(m2)
+s1$coefficients = cbind(s1$coefficients, get_multi_hyotesys_corrected_p_value(m2, "HC0"))
+dimnames(s1$coefficients)[[2]][5] = "Adjusted p-value"
+s1
+add1(m2, ~ .^2, test="F")
+```
+
+Делаем вывод, что лучше удалить признаки above_grade,chlorides,total_sulfur_dioxide, но они могут оказаться хорошими в парах с некоторыми другими признаками. Из вывода выше, подберем самые лучшие пары и внесем их в модель: пары density:above_grade,pH:above_grade,chlorides:pH,type:total_sulfur_dioxide,total_sulfur_dioxide:density
+
+```{r}
+m3 = lm(alcohol ~ type + constant_acidity + acetic_acidity + critic_acid_amount + residual_sugar + free_sulfur_dioxide + density + pH + sulphates + below_grade + I(residual_sugar^2) + I(chlorides^2) + density*above_grade + pH*above_grade + chlorides*pH + type*total_sulfur_dioxide + total_sulfur_dioxide*density, data=wine_data)
+```
+
+Снова произведем сравнение моделей
+
+```{r}
+
+##Сравнение моделей
+waldtest(m3, m2, vcov = vcovHC(m3, type = "HC0"))
+
+```
+
+Получили значимо лучшую модель. 
+
+Вот графики остатков:
+
+```{r}
+#Графики ошибок
+plot(1:dim(wine_data)[1], rstandard(m3), xlab="i", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(1:dim(wine_data)[1], rstandard(m3))
+grid()
+
+plot(fitted(m3), rstandard(m3), xlab="Fitted values", ylab="Standardized residuals", col=mycol, pch=19)
+addtrend(fitted(m3), rstandard(m3))
+grid()
+
+
+for (col_name in colnames(wine_data)) {
+	if (col_name != "alcohol" && col_name != "above_grade" && col_name != "chlorides" && col_name != "total_sulfur_dioxide") {
+		plot(wine_data[,col_name], rstandard(m3), xlab=col_name, ylab="Standardized residuals", col=mycol, pch=19)
+		addtrend(wine_data[,col_name], rstandard(m3))
+		grid()
+	}
+}
+
+```
+
+Считаем, что m3 -- самая хорошая модель, которая у нас получилась. Чтобы сделать из нее человеческие выводы, посмотрим на ее коэффициенты
+
+```{r}
+m3$coefficients
+```
+
+Видим, что наиболее весомый признак -- плотность, причем с отрицательнным весом. Это логично, потому что плотность спирта меньше плотности воды, и поэтому этот признак довольно четко связан с алкогольностью. Второй по значимости признак -- оценка, из которого мы видим, что чем менее алкогольное вино, тем вероятнее оно получит более высокую оценку.
+

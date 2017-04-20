@@ -1,0 +1,10 @@
+#!/bin/bash
+
+user=$1
+user_home_dir=`eval echo "~$user"`
+sudo cp "$HOME/.perldb" "$user_home_dir/.perldb"
+sudo chown "$user:$user" "$user_home_dir/.perldb"
+sudo chmod 600 "$user_home_dir/.perldb"
+sudo touch "$user_home_dir/debug"
+sudo chown "$user:$user" "$user_home_dir/debug"
+sudo chmod 600 "$user_home_dir/debug"

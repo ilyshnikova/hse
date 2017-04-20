@@ -202,8 +202,8 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 			history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
 			if x_k.size <= 2:
 				history['x'].append(np.copy(x_k))
-#		if display:
-#			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
+		if display:
+			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
 
 		if  np.isnan(x_k).all() or not np.isfinite(x_k).all():
 			message = "computational_error"

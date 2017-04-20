@@ -250,6 +250,65 @@ def third_exp():
 	print("show")
 	plt.show()
 
+
+def exp_4():
+	np.random.seed(31415)
+	m, n = 10000, 8000
+#	m, n = 1000, 800
+	A = np.random.randn(m, n)
+	b = np.sign(np.random.randn(m))
+
+
+	us_oracle = oracles.create_log_reg_oracle(A, b, oracle_type='usual')
+	opt_oracle =oracles. create_log_reg_oracle(A, b, regcoef=None, oracle_type='optimized')
+
+	hists = dict()
+
+	method = 'Wolfe'
+	for (orac, name) in [(us_oracle, 'usual_oracle'), (opt_oracle, 'optimized_oracle')]:
+		x_star, msg, history = optimization.gradient_descent(
+			us_oracle,
+			np.zeros(A.shape[1]),
+			trace=True,
+			line_search_options={
+				'method': method,
+				'c1': 1e-4,
+				'c2': 0.3,
+				'c': 0.9
+			},
+			display=True
+		)
+
+		hists[name] = history
+
+#	print("---------------------------------------- data ----------------------------------------")
+#
+#	print("x: ", history['time'])
+#
+#	print("y: ", history['func'])
+#
+#	print("---------------------------------------- data ----------------------------------------")
+
+	print(hists['usual_oracle']['func'])
+	print(hists['optimized_oracle']['func'])
+
+	plt.plot(hists["usual_oracle"]['time'], hists["usual_oracle"]['func'], color='b', label="usual_oracle")
+	plt.plot(hists["optimized_oracle"]['time'], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle")
+	plt.xlabel('Seconds')
+	plt.ylabel('func val')
+	plt.legend(loc=2)
+	print("show")
+	plt.show()
+
+	plt.plot([i for i in range(len(hists['usual_oracle']['func']))], hists["usual_oracle"]['func'], color='b', label="usual_oracle", alpha=0.5)
+	plt.plot([i for i in range(len(hists['optimized_oracle']['func']))], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle", alpha=0.5)
+	plt.xlabel('Iteration number')
+	plt.ylabel('func val')
+	plt.legend(loc=2)
+	print("show")
+	plt.show()
+
+
 #------------------------------------------------------------------------
 #for k in [3, 10, 50, 100, 400, 700 , 1000]:
 #	A = create_matrix(2, k)
@@ -303,5 +362,9 @@ def third_exp():
 
 
 #----------------------------------------------------------------------
-third_exp()
+#third_exp()
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+exp_4()
 #----------------------------------------------------------------------

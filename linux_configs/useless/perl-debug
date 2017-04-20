@@ -1,0 +1,5 @@
+read -e smth
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+command=$(eval  "cat <<EOF | perl $DIR/perl-debug.pl"$'\n'"$smth"$'\n'"EOF"$'\n')
+echo -e $command
+eval "$command"

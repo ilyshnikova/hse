@@ -1,0 +1,88 @@
+---
+title: "Tsarkova2HW"
+author: "Царькова Анастасия"
+date: '19 ноября 2016 г '
+output: html_document
+---
+
+```{r results='hide', warning=FALSE, message=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gdata)
+library(lsr)
+library(corrplot)
+library(gmodels)
+```
+
+## Введние
+
+В данной работе произведен анализ корреляции различных признаков пациенток, проходивших с 2006 по 2008 вакцинацию против папилломавируса человека препаратом Гардасил, с использованием Крамер v для категориальных признаков и статистического критерия хи-квадрат, а так же различных методов визуализации данных. Для устранения проблемы проблемы проверки множественных гипотез использовался метод Холма.
+
+## Построение и визуализация матрицы кореляций 
+
+Поскольку все признаки категориальные, будем использовать корреляцию Крамера V.
+
+```{r warning=FALSE}
+DT <- read.xls("gardasil.xls")
+DT$Completed = (DT$Shots == 3) & (DT$Completed.within.12.months == "yes")
+features = c("Completed", "Race", "Clinic", "Practice.type", "AgeGroup", "Insurance.type", "Location.type")
+
+corr_matrix = as.data.frame(matrix(0, ncol = length(features), nrow = length(features)))
+colnames(corr_matrix) = features
+rownames(corr_matrix) = features
+for(row in features) {
+	for(col in features) {
+		distr_table = table(DT[,row], DT[,col])
+		corr_matrix[row, col] = cramersV(distr_table)
+	}
+}
+print(corr_matrix)
+corrplot(as.matrix(corr_matrix), method="pie")
+```
+
+Из данной таблицы видно, что признаки коррелируют между собой, например, Location.type сильно зависит от  Practice.type. Поэтому, нельзя использовать поправки, требующие независимости признаков, например, такие, как Метод Бенджамини-Хохберга. Значит, будем использовать метод Холма.
+
+```{r warning=FALSE}
+print(p.adjust(
+	lapply(
+		c("Race", "Clinic", "Practice.type", "AgeGroup", "Insurance.type", "Location.type"),
+		function(feature) chisq.test(table(DT[,"Completed"], DT[,feature]))$p.value
+	),method="holm"
+) < 0.01)
+```
+
+Из результатов проверки статистической значимости значения корреляции видно, что такие признаки как "Practice.type" и "AgeGroup" можно назвать  не коррелирующими с признаком Completed -- завершенностью курса лечения. А "Race", "Clinic", "Insurance.type", "Location.type" -- коррелирующими
+
+```{r warning=FALSE, echo=FALSE, results='hide', message=FALSE, echo=FALSE}
+output_distr_for_field = function(field) {
+  DT$truncated_field = substr(DT[,field], 0, 20)
+  join = CrossTable(DT$Completed, DT$truncated_field, prop.chisq=)
+
+  join_count = join$t
+  barplot(join$prop.col, col=topo.colors(2), ylab = 'Frequency', xlab=field)
+  legend('topright', c("no", "yes"), pch=15, col=topo.colors(2))
+}
+```
+
+Ниже можем видеть, что процент завершенности лечения зависит от рассы: черные люди завершают лечение только в 20 процентов случаев, испанские и непонятные где-то на 35 процентов, белые на 40 процентов. Возможно, зависимость обосновывается каким-то другим фактором, например, тем, что люди разных национальностей живут на немного разной территории и посещают другие клиники, а клиника тоже связана с уровнем прохождения лечения.
+
+```{r warning=FALSE, echo=FALSE, results='hide', message=FALSE, echo=FALSE}
+output_distr_for_field("Race")
+```
+
+Ниже видим зависимость прохождения лечения от клиник. Связь кажется оправданной, потому что врачи в разных клиниках могут по-разному настаивать на завершении лечения, или же по-разному организовывать этот процесс. 
+
+```{r warning=FALSE, echo=FALSE, results='hide', message=FALSE, echo=FALSE}
+output_distr_for_field("Clinic")
+```
+
+Видим, что в случае страховки medical assistance меньший процент людей завершает лечение. 
+
+```{r warning=FALSE, echo=FALSE, results='hide', message=FALSE, echo=FALSE}
+output_distr_for_field("Insurance.type")
+```
+
+Видим, что люди из пригорода завершают лечение в большем числе случаев, чем люди из города. Скорей всего, эта связь тоже неявная через третий признак: клиники. Признак "клиники" и location type очень сильно связаны, как видно из диаграммы вначале работы. 
+
+```{r warning=FALSE, echo=FALSE, results='hide', message=FALSE, echo=FALSE}
+output_distr_for_field("Location.type")
+```

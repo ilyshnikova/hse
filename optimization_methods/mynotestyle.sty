@@ -1,0 +1,199 @@
+% Declare that this style file requires at least LaTeX version 2e.
+\NeedsTeXFormat{LaTeX2e}
+
+% Provide the name of your page, the date it was last updated, and a comment about what it's used for
+\ProvidesPackage{mynotestyle}
+
+% Main code
+\usepackage[T2A]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+
+% Wide page (but not for `beamer`)
+\@ifclassloaded{beamer}{}{\usepackage{fullpage}}
+
+% Indent first paragraph (Russian style) (but not for `beamer`)
+\@ifclassloaded{beamer}{}{\usepackage{indentfirst}}
+
+% Advanced enumerate (but not for `beamer`)
+\@ifclassloaded{beamer}{}{\usepackage{enumitem}}
+
+% For graphics
+\usepackage{graphicx}
+\usepackage{grffile}
+
+% For colors
+\usepackage{xcolor}
+
+% For frame boxes
+\usepackage{mdframed}
+
+% Hyperlinks
+\@ifclassloaded{beamer}{ % For `beamer`
+    \hypersetup{unicode=true}
+}{ % For usual documents
+    \usepackage[hidelinks]{hyperref}
+}
+
+% For vertical alignment of images
+\usepackage[export]{adjustbox}% http://ctan.org/pkg/adjustbox
+
+% Wrap figure
+\usepackage{wrapfig}
+\usepackage{float}
+
+% Tables
+\usepackage{diagbox} % Diagonal line in table header
+\renewcommand{\arraystretch}{1.2} % More space between table rows
+\usepackage{multirow} % Multiple rows
+
+% Multiple columns
+\usepackage{multicol}
+\setlength\columnsep{-3em} % default columnsep for all pages
+
+% Tables
+\usepackage{diagbox} % Diagonal line in table header
+\renewcommand{\arraystretch}{1.2} % More space between table rows
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}} % New cell type: centered paragraph
+
+% Define some useful commands
+\renewcommand{\epsilon}{\varepsilon} % nice-looking epsilon
+\newcommand{\widerule}{\noindent\rule[0.5ex]{\linewidth}{1pt}} % wide line
+
+% For listings
+\usepackage{listings}
+% Define style
+\@ifclassloaded{beamer}{ % Nice style for `beamer` (http://tex.stackexchange.com/a/58543)
+    \usepackage{lstlinebgrd}
+    \usepackage{expl3,xparse}
+    \ExplSyntaxOn
+    \NewDocumentCommand \lstcolorlines { O{hlcolor} m }
+    {
+     \color{backcolor}
+     \clist_if_in:nVT { #2 } { \the\value{lstnumber} }{ \color{#1} }
+    }
+    \ExplSyntaxOff
+    \definecolor{codegreen}{rgb}{0,0.6,0}
+    \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+    \definecolor{codepurple}{rgb}{0.58,0,0.82}
+    \definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+    \colorlet{hlcolor}{orange!30}
+    \lstdefinestyle{mystyle}{
+        language=Python,
+        backgroundcolor=\color{backcolor},
+        commentstyle=\color{codegreen},
+        keywordstyle=\color{magenta},
+        numberstyle=\tiny\color{codegray},
+        stringstyle=\color{codepurple},
+        basicstyle=\tiny,
+        breakatwhitespace=false,
+        breaklines=true,
+        captionpos=b,
+        keepspaces=true,
+        numbers=left,
+        numbersep=5pt,
+        showspaces=false,
+        showstringspaces=false,
+        showtabs=false,
+        tabsize=2,
+        moredelim=**[is][\color{red}]{@}{@}
+    }
+    \lstset{style=mystyle}
+}{ % Simple style for usual documents
+    \lstset{
+        basicstyle=\ttfamily\small,
+        columns=flexible,
+        frame=single
+    }
+}
+
+% For algorithms
+\usepackage[ruled]{algorithm}
+\usepackage{algpseudocode}
+% Translate into Russian
+\renewcommand{\listalgorithmname}{Список алгоритмов}
+\floatname{algorithm}{Алгоритм}
+\renewcommand{\algorithmicrequire}{\textbf{Вход:}}
+\renewcommand{\algorithmicensure}{\textbf{Выход:}}
+
+% Advanced verbatim
+\usepackage{fancyvrb}
+
+% My title
+% Useful commands
+\newcommand\coursetitle{Методы оптимизации}
+\newcommand\courseplacetime{ФКН ВШЭ, зима 2017}
+\newcommand\noteid[1]{\newcommand\@noteid{#1}} % e.g. "Seminar 2"
+\newcommand\notetitle[1]{\newcommand\@notetitle{#1}} % e.g "Convex functions"
+\newcommand\notedate[1]{\newcommand\@notedate{#1}} % e.g 2 February 2017
+
+% Define title
+\@ifclassloaded{beamer}{ % This code is for `beamer`
+    \title{\coursetitle}
+    \subtitle{\@noteid: \@notetitle}
+    \date{\@notedate \\ \courseplacetime}
+    \author{}
+}{ % This code is for usual documents
+    \title{\vspace{-1.35cm}{\large{\bf\coursetitle{, }\courseplacetime}\\{\@noteid: \@notetitle}}\vspace{-1cm}}
+    \date{\large{\@notedate}}
+    \author{}
+    % Add title automatically at the beginning of each document
+    \AtBeginDocument{\maketitle}
+}
+
+% Useful commands for debugging
+\newcommand\warning[1]{{\bf\color{red}Внимание: #1}}
+
+% Maths
+\usepackage{mathtools}
+\mathtoolsset{showonlyrefs} % turn off numbering of unreferenced equations
+\usepackage[makeroom]{cancel} % for cancellations
+% Define theorems, lemmas, corollaries, remarks, definitions
+\usepackage{amsmath,amssymb,amsthm}
+\@ifclassloaded{beamer}{}{ % `beamer` already has these defined, so don't load them to avoid errors
+    \newtheorem{theorem}{Теорема}
+    \newtheorem{proposition}{Утверждение}
+    \newtheorem{corollary}{Следствие}
+    \newtheorem{lemma}{Лемма}[theorem]
+    \theoremstyle{definition}
+    \newtheorem{definition}{Определение}
+    \newtheorem{remark}{Замечание}
+    \newtheorem{example}{Пример}
+    \newtheorem{problem}{Задача}
+    \newtheorem*{solution}{Решение}
+}
+
+% Reduce equation spaces for `beamer`
+\@ifclassloaded{beamer}{
+    \AtBeginDocument{
+        \abovedisplayskip=0.1cm
+        \belowdisplayskip=0.1cm
+    }
+}
+
+% My operators
+\newcommand{\R}{\mathbb{R}} % real numbers
+\renewcommand{\C}{\mathbb{C}} % complex numbers
+\newcommand{\E}{\mathbb{E}} % expectation
+\renewcommand{\S}{\mathbb{S}} % symmetric matrices
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\Argmin}{Argmin} % the set of all global minimizers
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\Argmax}{Argmax} % the set of all global maximizers
+\DeclareMathOperator*{\st}{s.t.} % subject to
+\DeclareMathOperator*{\sign}{sign}
+\DeclareMathOperator*{\Tr}{Tr}
+\DeclareMathOperator*{\Det}{Det}
+\DeclareMathOperator*{\Diag}{Diag}
+\DeclareMathOperator*{\Rank}{Rank}
+\DeclareMathOperator*{\Adj}{Adj} % Adjugate matrix
+\DeclareMathOperator*{\Dom}{Dom}
+\DeclareMathOperator*{\Opt}{Opt} % useful for denoting optimal value (Nemirovski's style)
+\DeclareMathOperator*{\Ker}{Ker} % Kernel
+\DeclareMathOperator*{\Img}{Im} % Image of a matrix
+\DeclareMathOperator{\Epi}{Epi} % Epigraph set of a function
+\DeclareMathOperator{\Lev}{Lev} % Level set of a function
+\let\Proj\relax % forget already defined command `Proj`
+\DeclareMathOperator{\Proj}{\Pi} % Projection
+\newcommand{\lagr}{\mathcal{L}} % Lagrangian function

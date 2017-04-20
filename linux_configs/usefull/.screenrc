@@ -1,0 +1,11 @@
+altscreen on
+defscrollback 10000
+# Make xterm scrolling work properly with screen.
+termcapinfo xterm-256color|xterm-color|xterm|xterms|xs|rxvt ti@:te@
+shell -$SHELL
+escape ^\\
+vbell off
+#setenv SSH_AUTH_SOCK $HOME/.ssh/ssh_auth_sock
+#deflog on
+#logfile /$HOME/screenlog
+#logfile flush 1
