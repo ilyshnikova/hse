@@ -253,60 +253,100 @@ def third_exp():
 
 def exp_4():
 	np.random.seed(31415)
-	m, n = 10000, 8000
-#	m, n = 1000, 800
+	m, n = 1000, 800
 	A = np.random.randn(m, n)
 	b = np.sign(np.random.randn(m))
-
-
-	us_oracle = oracles.create_log_reg_oracle(A, b, oracle_type='usual')
-	opt_oracle =oracles. create_log_reg_oracle(A, b, regcoef=None, oracle_type='optimized')
-
+	lamda = 1 / np.alen(b)
 	hists = dict()
 
-	method = 'Wolfe'
-	for (orac, name) in [(us_oracle, 'usual_oracle'), (opt_oracle, 'optimized_oracle')]:
-		x_star, msg, history = optimization.gradient_descent(
-			us_oracle,
-			np.zeros(A.shape[1]),
-			trace=True,
-			line_search_options={
-				'method': method,
-				'c1': 1e-4,
-				'c2': 0.3,
-				'c': 0.9
-			},
-			display=True
-		)
+	for opt in ["optimized", "usual"]:
+	    logr = oracles.create_log_reg_oracle(A, b, lamda, opt)
+	    x_star, msg, history = optimization.gradient_descent(logr, np.zeros(A.shape[1]), trace=True)
+	    print(opt)
+	    hists[opt] = history
+	plt.clf()
+	plt.plot(range(len(hists["usual"]['time'])), hists["usual"]['func'], label='usual', color='blue', linestyle='--', alpha=0.7)
+	plt.plot(range(len(hists["optimized"]['time'])), hists["optimized"]['func'], label='optimized', color='red', linestyle=':', alpha=0.7)
+	plt.xlabel('Iteration')
+	plt.ylabel('F(x)')
+	plt.legend(loc=2)
+	plt.show()
+	plt.clf()
 
-		hists[name] = history
-
-#	print("---------------------------------------- data ----------------------------------------")
-#
-#	print("x: ", history['time'])
-#
-#	print("y: ", history['func'])
-#
-#	print("---------------------------------------- data ----------------------------------------")
-
-	print(hists['usual_oracle']['func'])
-	print(hists['optimized_oracle']['func'])
-
-	plt.plot(hists["usual_oracle"]['time'], hists["usual_oracle"]['func'], color='b', label="usual_oracle")
-	plt.plot(hists["optimized_oracle"]['time'], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle")
+	plt.plot(hists["usual"]['time'], hists["usual"]['func'], label='usual', color='blue')
+	plt.plot(hists["optimized"]['time'], hists["optimized"]['func'], label='optimized', color='green')
 	plt.xlabel('Seconds')
-	plt.ylabel('func val')
+	plt.ylabel('F(x)')
 	plt.legend(loc=2)
-	print("show")
 	plt.show()
+	plt.clf()
 
-	plt.plot([i for i in range(len(hists['usual_oracle']['func']))], hists["usual_oracle"]['func'], color='b', label="usual_oracle", alpha=0.5)
-	plt.plot([i for i in range(len(hists['optimized_oracle']['func']))], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle", alpha=0.5)
-	plt.xlabel('Iteration number')
-	plt.ylabel('func val')
+	df_0 = np.linalg.norm(logr.grad(np.zeros(A.shape[1])))**2
+	r_k_gd = np.vectorize(lambda x: math.log(np.linalg.norm(x**2)/df_0))(hists['usual']['grad_norm'])
+	r_k_new = np.vectorize(lambda x: math.log(np.linalg.norm(x**2)/df_0))(hists['optimized']['grad_norm'])
+	plt.plot(hists["usual"]['time'], r_k_gd, label='usual', color='blue')
+	plt.plot(hists["optimized"]['time'], r_k_new, label='optimized', color='green')
+	plt.xlabel('Seconds')
+	plt.ylabel('ln(r_k)')
 	plt.legend(loc=2)
-	print("show")
 	plt.show()
+	#	np.random.seed(31415)
+#	m, n = 10000, 8000
+##	m, n = 1000, 800
+#	A = np.random.randn(m, n)
+#	b = np.sign(np.random.randn(m))
+#
+#
+#	us_oracle = oracles.create_log_reg_oracle(A, b, oracle_type='usual')
+#	opt_oracle =oracles. create_log_reg_oracle(A, b, regcoef=None, oracle_type='optimized')
+#
+#	hists = dict()
+#
+#	method = 'Wolfe'
+#	for (orac, name) in [(opt_oracle, 'optimized_oracle'),(us_oracle, 'usual_oracle')]:
+#		x_star, msg, history = optimization.gradient_descent(
+#			us_oracle,
+#			np.zeros(A.shape[1]),
+#			trace=True,
+#			line_search_options={
+#				'method': method,
+#				'c1': 1e-4,
+#				'c2': 0.3,
+#				'c': 0.9
+#			},
+#			display=False
+#		)
+#
+#		hists[name] = history
+#		print(history['func'])
+#
+##	print("---------------------------------------- data ----------------------------------------")
+##
+##	print("x: ", history['time'])
+##
+##	print("y: ", history['func'])
+##
+##	print("---------------------------------------- data ----------------------------------------")
+##
+##	print(hists['usual_oracle']['func'])
+##	print(hists['optimized_oracle']['func'])
+#
+#	plt.plot(hists["usual_oracle"]['time'], hists["usual_oracle"]['func'], color='b', label="usual_oracle")
+#	plt.plot(hists["optimized_oracle"]['time'], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle")
+#	plt.xlabel('Seconds')
+#	plt.ylabel('func val')
+#	plt.legend(loc=2)
+#	print("show")
+#	plt.show()
+#
+#	plt.plot([i for i in range(len(hists['usual_oracle']['func']))], hists["usual_oracle"]['func'], color='b', label="usual_oracle", alpha=0.5)
+#	plt.plot([i for i in range(len(hists['optimized_oracle']['func']))], hists["optimized_oracle"]['func'], color='g', label="optimized_oracle", alpha=0.5)
+#	plt.xlabel('Iteration number')
+#	plt.ylabel('func val')
+#	plt.legend(loc=2)
+#	print("show")
+#	plt.show()
+
 
 
 #------------------------------------------------------------------------
