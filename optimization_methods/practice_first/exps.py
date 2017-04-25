@@ -251,13 +251,52 @@ def third_exp():
 	plt.show()
 
 
+def exp_5():
+	m, n = 5000, 500
+	A = np.random.randn(m, n)
+	b = np.zeros(m)
+	lamda = 1 / np.alen(b)
+	x_0 = np.ones(A.shape[1])
+
+	for i in range(len(x_0)):
+		x_0[i] = x_0[i] * i**2;
+
+	method = 'Wolfe'
+	logr = oracles.create_log_reg_oracle(A, b, lamda)
+	x_star, msg, history = optimization.gradient_descent(logr, x_0, trace=True,
+		line_search_options={
+	        	'method': method,
+		        'c1': 1e-4,
+		        'c2': 0.9,
+			'c': 0.1
+		}
+	)
+
+	df_0 = np.linalg.norm(logr.grad(x_0))**2
+	r_k_gd = np.vectorize(lambda x: math.log(x**2/df_0))(history['grad_norm'])
+	plt.plot(range(len(history['time'])), r_k_gd, label=method, color='blue')
+	plt.xlabel('Seconds')
+	plt.ylabel('ln(r_k)')
+	plt.legend(loc=2)
+	plt.show()
+
+	r_k_gd = np.vectorize(lambda x: abs(x - 0))(history['func'])
+	plt.plot(range(len(history['time'])), r_k_gd, label=method, color='blue')
+	plt.xlabel('Seconds')
+	plt.ylabel('|f - f^*|')
+	plt.legend(loc=2)
+	plt.show()
+
+
+
+
+
 def exp_4():
 	np.random.seed(31415)
-	m, n = 1000, 800
+	m, n = 10000, 8000
 	A = np.random.randn(m, n)
 	b = np.sign(np.random.randn(m))
 	lamda = 1 / np.alen(b)
-	hists = dict()
 
 	for opt in ["optimized", "usual"]:
 	    logr = oracles.create_log_reg_oracle(A, b, lamda, opt)
@@ -406,5 +445,5 @@ def exp_4():
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-exp_4()
+exp_5()
 #----------------------------------------------------------------------
