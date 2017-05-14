@@ -118,34 +118,54 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
 	def update_opt_x(self, x):
 		if self.last_x is None or not np.allclose(self.last_x, x):
 			self.last_x = np.copy(x)
-			self.last_Ax = -self.b *self.matvec_Ax(x)
-		elif np.allclose(self.last_x + self.last_alpha * self.last_d, x):
+			self.last_Ax = self.matvec_Ax(x)
+		elif self.last_d is not None and np.allclose(self.last_x + self.last_alpha * self.last_d, x):
 			self.last_Ax = self.last_Ax + self.last_alpha * self.last_Ad
 			self.last_x = np.copy(x)
 
 		return self.last_Ax
 
 	def update_opt_d(self, d):
+		if self.last_x is not None and np.allclose(self.last_x, d):
+			self.last_d = np.copy(d)
+			self.last_Ad = self.last_Ax
 		if self.last_d is None or not np.allclose(self.last_d, d):
 			self.last_d = np.copy(d)
-			self.last_Ad = -self.b * self.matvec_Ax(d)
-
+			self.last_Ad = self.matvec_Ax(d)
 		return self.last_Ad
 
 	def func(self, x):
-		return self.func_directional(x, np.zeros(x.shape[0]), 0)
+		Ax = self.update_opt_x(x)
+		return 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), -self.b * Ax)) + self.regcoef * 0.5 * x.dot(x)
+
+	def grad(self, x):
+		Ax = self.update_opt_x(x)
+		return (-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(-1 * self.b * Ax) * self.b) + self.regcoef * x
+
+	def hess(self, x):
+		Ax = self.update_opt_x(x)
+		return (1.0/self.b.shape[0]) * self.matmat_ATsA(scipy.special.expit(Ax * self.b) * scipy.special.expit(-Ax * self.b)) + \
+			self.regcoef * np.identity(x.shape[0])
 
 	def func_directional(self, x, d, alpha):
-		Av = self.update_opt_x(x) + alpha * self.update_opt_d(d)
+		Av = self.b * (self.update_opt_x(x) + alpha * self.update_opt_d(d))
 		v = x + d * alpha
-		func_res = 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), Av)) + self.regcoef * 0.5 * v.dot(v)
+		func_res = 1.0 / self.b.shape[0] * np.sum(np.logaddexp(np.zeros(self.b.shape[0]), -Av)) + self.regcoef * 0.5 * v.dot(v)
 		self.last_alpha = alpha
 		return np.squeeze(func_res)
 
 	def grad_directional(self, x, d, alpha):
-		Av = self.update_opt_x(x) + alpha * self.update_opt_d(d)
+		Av = self.b * (self.update_opt_x(x) + alpha * self.update_opt_d(d))
 		v = x + d * alpha
-		return ((-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(Av) * self.b) + self.regcoef * v).dot(d)
+
+#		return -(self.b * (scipy.special.expit(-self.b * next_ax))).dot(
+#		    self.matvec_Ax(d)
+#		    ) / self.b.size + self.regcoef * next_x.T.dot(d)
+
+		return  -(self.b * (scipy.special.expit(-Av))).dot(self.last_Ad) / self.b.size + self.regcoef * v.T.dot(d)
+#		return (-1.0 / self.b.shape[0]) * ((self.b * scipy.special.expit(-1 * self.b * Av))).dot(self.last_Ad) + self.regcoef * v.dot(d)
+#		return (1.0/self.b.shape[0]) * (scipy.special.expit(Av) * self.b) * self.matvec_Ax(d) + (self.regcoef * v).dot(d)
+#		return ((-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(Av) * self.b) + self.regcoef * v).dot(d)
 
 def create_log_reg_oracle(A, b, regcoef=None, oracle_type='usual'):
 	"""

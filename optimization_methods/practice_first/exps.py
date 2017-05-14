@@ -22,13 +22,13 @@ def plot_levels(func, xrange=None, yrange=None, levels=None):
 
     Example:
     --------
-    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+    >> oracle = oracles.QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
     >> plot_levels(oracle.func)
     """
     if xrange is None:
-        xrange = [-20, 20]
+        xrange = [-6, 6]
     if yrange is None:
-        yrange = [-20, 20]
+        yrange = [-5, 5]
     if levels is None:
         levels = [0, 0.25, 1, 4, 9, 16, 25]
 
@@ -40,16 +40,80 @@ def plot_levels(func, xrange=None, yrange=None, levels=None):
         for j in range(Z.shape[1]):
             Z[i, j] = func(np.array([X[i, j], Y[i, j]]))
 
-#    CS = plt.contourf(X, Y, Z, levels=levels)
+#    CS = plt.contour(X, Y, Z, levels=levels, colors='k', linewidth=4.0)
 #    plt.clabel(CS, inline=1, fontsize=8)
+
     contour = plt.contour(X, Y, Z, levels, colors='k')
     plt.clabel(contour, colors = 'k', fmt = '%2.1f', fontsize=12)
     cmap = plt.cm.get_cmap('YlGnBu')
     contour_filled = plt.contourf(X, Y, Z, levels, cmap=cmap, alpha=0.5)
     plt.colorbar(contour_filled)
 
-    plt.grid()
 
+
+
+#def plot_levels(func, xrange=None, yrange=None, levels=None):
+#    """
+#    Plotting the contour lines of the function.
+#
+#    Example:
+#    --------
+#    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+#    >> plot_levels(oracle.func)
+#    """
+#    if xrange is None:
+#        xrange = [-20, 20]
+#    if yrange is None:
+#        yrange = [-20, 20]
+#    if levels is None:
+#        levels = [0, 0.25, 1, 4, 9, 16, 25]
+#
+#    x = np.linspace(xrange[0], xrange[1], 100)
+#    y = np.linspace(yrange[0], yrange[1], 100)
+#    X, Y = np.meshgrid(x, y)
+#    Z = np.zeros(X.shape)
+#    for i in range(Z.shape[0]):
+#        for j in range(Z.shape[1]):
+#            Z[i, j] = func(np.array([X[i, j], Y[i, j]]))
+#
+##    CS = plt.contourf(X, Y, Z, levels=levels)
+##    plt.clabel(CS, inline=1, fontsize=8)
+#    contour = plt.contour(X, Y, Z, levels, colors='k')
+#    plt.clabel(contour, colors = 'k', fmt = '%2.1f', fontsize=12)
+#    cmap = plt.cm.get_cmap('YlGnBu')
+#    contour_filled = plt.contourf(X, Y, Z, levels, cmap=cmap, alpha=0.5)
+#    plt.colorbar(contour_filled)
+#
+#    plt.grid()
+
+
+#def plot_trajectory(func, history, fit_axis=False, label=None):
+#    """
+#    Plotting the trajectory of a method.
+#    Use after plot_levels(...).
+#
+#    Example:
+#    --------
+#    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+#    >> [x_star, msg, history] = gradient_descent(oracle, np.array([3.0, 1.5], trace=True)
+#    >> plot_levels(oracle.func)
+#    >> plot_trajectory(oracle.func, history['x'])
+#    """
+#    x_values, y_values = zip(*history)
+#    x_values = np.array(x_values)
+#    y_values = np.array(y_values)
+#
+#    plt.quiver(x_values[:-1], y_values[:-1], x_values[1:] - x_values[:-1], y_values[1:]-y_values[:-1], scale_units='xy', angles='xy', scale=1, linewidth=0.1)
+#
+#    plt.plot(x_values, y_values, '-v', linewidth=2.0, ms=7.0, alpha=0.5, c='k', label=label)
+#
+#    if fit_axis:
+#        xmax, ymax = np.max(x_values), np.max(y_values)
+#        COEF = 2
+#        xrange = [-xmax * COEF, xmax * COEF]
+#        yrange = [-ymax * COEF, ymax * COEF]
+#        plt.xlim(xrange)
+#        plt.ylim(yrange)
 
 def plot_trajectory(func, history, fit_axis=False, label=None):
     """
@@ -58,27 +122,23 @@ def plot_trajectory(func, history, fit_axis=False, label=None):
 
     Example:
     --------
-    >> oracle = QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
-    >> [x_star, msg, history] = gradient_descent(oracle, np.array([3.0, 1.5], trace=True)
+    >> oracle = oracles.QuadraticOracle(np.array([[1.0, 2.0], [2.0, 5.0]]), np.zeros(2))
+    >> [x_star, msg, history] = optimization.gradient_descent(oracle, np.array([3.0, 1.5], trace=True)
     >> plot_levels(oracle.func)
     >> plot_trajectory(oracle.func, history['x'])
     """
     x_values, y_values = zip(*history)
-    x_values = np.array(x_values)
-    y_values = np.array(y_values)
+    plt.plot(x_values, y_values, marker='v', mec="k",
+             c='r', label=label)
 
-    plt.quiver(x_values[:-1], y_values[:-1], x_values[1:] - x_values[:-1], y_values[1:]-y_values[:-1], scale_units='xy', angles='xy', scale=1, linewidth=0.1)
-
-    plt.plot(x_values, y_values, '-v', linewidth=2.0, ms=7.0, alpha=0.5, c='k', label=label)
-
+    # Tries to adapt axis-ranges for the trajectory:
     if fit_axis:
         xmax, ymax = np.max(x_values), np.max(y_values)
-        COEF = 2
+        COEF = 1.5
         xrange = [-xmax * COEF, xmax * COEF]
         yrange = [-ymax * COEF, ymax * COEF]
         plt.xlim(xrange)
         plt.ylim(yrange)
-
 
 
 def first_exp(A, x_0, method, b=np.zeros(2), levels=None):
@@ -92,13 +152,12 @@ def first_exp(A, x_0, method, b=np.zeros(2), levels=None):
 	        'method': method,
 	        'c1': 1e-4,
 	        'c2': 0.3,
-		'c': 0.1
-	    }
+		'c': 0.2
+	    },
 	)
 
 	if msg != 'success':
 		print(msg)
-		return
 
 	x_values, y_values = zip(*history['x'])
 	x_max = max(x_values)
@@ -112,11 +171,8 @@ def first_exp(A, x_0, method, b=np.zeros(2), levels=None):
 	plot_trajectory(oracle.func, history['x'], fit_axis=False)
 
 	plt.title(
-		'gradient descent with %s linear search, steps: %d\n from point %s \nfor Quadratic function with\n A = %s' % (
-			method,
+		'%d steps' % (
 			len(history['x']) - 1,
-			str(x_0),
-			str(A.toarray())
 		)
 	)
 	plt.show()
@@ -252,43 +308,101 @@ def third_exp():
 
 
 def exp_5():
-	m, n = 5000, 500
-	A = np.random.randn(m, n)
-	b = np.zeros(m)
-	lamda = 1 / np.alen(b)
-	x_0 = np.ones(A.shape[1])
+	m, n = 500, 90
+	A1 = np.random.randn(m, n)
+	b1 = np.random.randn(m,)
 
-	for i in range(len(x_0)):
-		x_0[i] = x_0[i] * i**2;
+	m, n = 500, 90
+	A2 = np.random.randn(m, n)
+	b2 = np.random.randn(m,)
+	lamda1 = 1 / np.alen(b1)
 
-	method = 'Wolfe'
-	logr = oracles.create_log_reg_oracle(A, b, lamda)
-	x_star, msg, history = optimization.gradient_descent(logr, x_0, trace=True,
-		line_search_options={
-	        	'method': method,
-		        'c1': 1e-4,
-		        'c2': 0.9,
-			'c': 0.1
-		}
-	)
+#	A = np.array([[1., 2.], [2., 5.]])
+#	b = np.array([0., 0.])
+	lamda2 = 1 / np.alen(b2)
+#	x_0 = np.array([3., 1.5])
+	x_01 = np.ones(A1.shape[1])
+	for i in range(A1.shape[1]):
+		x_01[i] = i
 
-	df_0 = np.linalg.norm(logr.grad(x_0))**2
-	r_k_gd = np.vectorize(lambda x: math.log(x**2/df_0))(history['grad_norm'])
-	plt.plot(range(len(history['time'])), r_k_gd, label=method, color='blue')
-	plt.xlabel('Seconds')
+	x_02 = np.ones(A2.shape[1])
+	for i in range(A2.shape[1]):
+		x_02[i] = i
+
+
+	line_search_options = [
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.0001},
+##		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.001},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.01},
+##		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.01},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.1},
+##		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.2},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.3},
+##		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.5},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.7},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.8},
+##		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.85},
+#		{'method': 'Wolfe', 'c1': 1e-3, 'c2': 0.9},
+#		{'method': 'Armijo', 'c1': 0.001},
+#		{'method': 'Armijo', 'c1': 0.01},
+#		{'method': 'Armijo', 'c1': 0.1},
+#		{'method': 'Armijo', 'c1': 0.2},
+#		{'method': 'Armijo', 'c1': 0.9},
+#		{'method': 'Armijo', 'c1': 0.93},
+#		{'method': 'Armijo', 'c1': 0.95},
+
+		{'method': 'Constant', 'c': 0.1},
+		{'method': 'Constant','c': 0.5},
+		{'method': 'Constant','c': 0.7},
+		{'method': 'Constant','c': 0.9},
+		{'method': 'Constant','c': 1},
+		{'method': 'Constant','c': 3},
+		{'method': 'Constant','c': 3.5},
+		{'method': 'Constant','c': 10},
+		{'method': 'Constant','c': 20},
+		{'method': 'Constant','c': 30},
+	]
+	r = []
+	r_k = []
+	xs = []
+
+
+	for i in line_search_options:
+		print(i)
+		if i['method'] == 'Wolfe':
+			logr = oracles.create_log_reg_oracle(A1, b1, lamda1)
+
+			df_0 = np.linalg.norm(logr.grad(x_01))**2
+			x_star, msg, history = optimization.newton(logr, x_01, trace=True, line_search_options=i)
+		else:
+			logr = oracles.create_log_reg_oracle(A2, b2, lamda2)
+			df_0 = np.linalg.norm(logr.grad(x_02))**2
+			x_star, msg, history = optimization.newton(logr, x_02, trace=True, line_search_options=i)
+
+#		import pdb; pdb.set_trace()
+		r_k += [np.vectorize(lambda x: math.log(x**2/df_0, 10))(history['grad_norm'])]
+		xs += [range(len(history['time']))]
+		r += [np.vectorize(lambda x: abs(x - 0))(history['func'])]
+
+	plt.xlabel('Iteration')
 	plt.ylabel('ln(r_k)')
-	plt.legend(loc=2)
+
+	for i in range(len(r)):
+		print(xs[i])
+		print(r_k[i])
+		plt.plot(xs[i], r_k[i], label=(line_search_options[i]['method'] + ' ' + str(line_search_options[i]['c'])))
+	plt.title("Constant")
+	plt.legend()
 	plt.show()
 
-	r_k_gd = np.vectorize(lambda x: abs(x - 0))(history['func'])
-	plt.plot(range(len(history['time'])), r_k_gd, label=method, color='blue')
-	plt.xlabel('Seconds')
+	plt.xlabel('Iteration')
 	plt.ylabel('|f - f^*|')
-	plt.legend(loc=2)
+	plt.title("Constant")
+	for i in range(len(r)):
+		plt.plot(xs[i], r[i], label=(line_search_options[i]['method'] + ' ' + ' ' + str(line_search_options[i]['c'])))
+
+	plt.legend()
 	plt.show()
-
-
-
 
 
 def exp_4():
@@ -445,5 +559,25 @@ def exp_4():
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-exp_5()
+#exp_5()
 #----------------------------------------------------------------------
+
+
+
+A = [np.array([[2.,0.],[0.,1.]]), np.array([[60.,0.],[0.,1.]])]
+x_0 = [np.array([1.,1.]), np.array([20.,30.])]
+
+
+#A = np.array([[60.,0.],[0.,1.]]) # 66.6278484037
+#A = np.array([[1.,0.],[0.,2.]]) # 2.0
+
+#A = np.array([[1.,0.],[0.,20.]]) #
+#print(np.linalg.cond(A))
+#
+#x_0 = np.array([22.,34.])
+method = 'Constant'
+
+for a in A:
+	for x in x_0:
+		first_exp(a, x, method)
+

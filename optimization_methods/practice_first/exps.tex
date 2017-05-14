@@ -93,28 +93,118 @@ f(x) = \lfrac{1}{m} \sum_{i = 1}^m \ln(1 + \exp(-b_ia_i^Tx)) + \lfrac{\lambda}{2
 $$
 
 $$
-\nabla f(x) = \lfrac{1}{m} A^T \left(b * \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right) + \lambda x
+\nabla f(x) = -\lfrac{1}{m} A^T \left(b * \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right) + \lambda x = -\lfrac{1}{m} A^T \left(b * Expit(-b * Ax)\right) + \lambda x
 $$
 
 $$
-\nabla^2 f(x) = \lfrac{1}{m} A^T Diag\left(\left(1 - \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right) * \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right)A + \lambda I
+\nabla^2 f(x) = \lfrac{1}{m} A^T Diag\left(\left(1 - \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right) * \left(\lfrac{1}{1 - \exp(b * Ax)} \right)\right)A + \lambda I =
 $$
 
+$$
+= \lfrac{1}{m} A^T Diag\left(1 - Expit(b * Ax)\right) * \left(Expit(-b * Ax)\right)A + \lambda I
+$$
 
 \section{Первый эксперимент.}
 
 Зависимость поведения метода от обусловденности функции.
 
-\includegraphics[width=0.5 \textwidth]{11.png}
-\includegraphics[width=0.5 \textwidth]{12.png}
+В данном эксперименте предлагается проанализировать траекторию градиентого спуска в зависимости от:
 
-\includegraphics[width=0.5 \textwidth]{13.png}
-\includegraphics[width=0.5 \textwidth]{14.png}
+1. Обусловленности функции
 
-\includegraphics[width=0.5 \textwidth]{15.png}
-\includegraphics[width=0.5 \textwidth]{16.png}
+2. Выбора начальной точки
 
-\includegraphics[width=0.5 \textwidth]{17.png}
+3. Стратегии выбора шага
+
+
+
+Сравнивая графики с линиями уровня функции и траекториями методов.
+
+
+
+Зададим объекты на которых будем сравнивать поведения методов:
+
+1. Функции --  двемерные квадратичные функции с d нулю(для простоты) $f(x) = x^TAx + bx = x^TAx$.
+
+$$
+M_1 =
+\begin{pmatrix}
+1 &	0\\
+0 &	2
+\end{pmatrix}\ M_2 =
+\begin{pmatrix}
+1 &	0\\
+0 &	60
+\end{pmatrix}
+$$
+
+
+2. Начальные точки
+
+$$
+x_1 =
+\begin{pmatrix}
+1 \\
+1
+\end{pmatrix}\ x_2 =
+\begin{pmatrix}
+20 \\
+30
+\end{pmatrix}
+$$
+
+3. Cтратегии выбора шага: Armijo, Wolfe, Constant\\
+
+
+Результаты эксперимента:\\
+
+
+$\bullet$ Constant\\
+
+Видно что метод работает не очень хорошо. Делает слишком много шагов, но не слишком чувствителек к выбору начальной точки.
+
+Более того крайне чувствителен к обусловленности функции, на $M_2$ метод возвращает $computational_error$, поэтому я взяла вместо нее
+$
+M =\begin{pmatrix}1 &	0\\ 0 &	10
+\end{pmatrix}
+$
+и все равно получила $iterations_exceeded$, но полученные графики очень показательны. Кажется что метот вряд ли сойдется при увеличениии числа итераций.
+
+
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.49\linewidth]{15.png} &
+\includegraphics[width=0.49\linewidth]{16.png} \\
+ a)$M_1,\ x_1$ & b)$M_1,\ x_2$\\
+\end{tabular}
+\end{center}
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.49\linewidth]{17.png} &
+\includegraphics[width=0.49\linewidth]{18.png} \\
+ a)$M,\ x_1$ & b)$M,\ x_2$\\
+\end{tabular}
+\end{center}
+
+$\bullet$ Armijo
+
+Видно что метод очень чувствутелен к обусловленности функции. Так же есть небольшая зависимость о выбора начальной точки.
+
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.49\linewidth]{11.png} &
+\includegraphics[width=0.49\linewidth]{12.png} \\
+ a)$M_1,\ x_1$ & b)$M_1,\ x_2$\\
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{cc}
+\includegraphics[width=0.49\linewidth]{13.png} &
+\includegraphics[width=0.49\linewidth]{14.png} \\
+ a)$M_2,\ x_1$ & b)$M_2,\ x_2$\\
+\end{tabular}
+\end{center}
 
 
 Зависимость поведения метода от начальной точки
@@ -164,5 +254,27 @@ real-sim
 
 \includegraphics[width=0.6 \textwidth]{42.png}
 \includegraphics[width=0.6 \textwidth]{43.png}
+
+
+
+Стратегия выбора длины шага в градиентном спуске
+
+\includegraphics[width=0.6 \textwidth]{51.png}
+\includegraphics[width=0.6 \textwidth]{52.png}
+
+
+\includegraphics[width=0.6 \textwidth]{53.png}
+\includegraphics[width=0.6 \textwidth]{54.png}
+
+
+Стратегия выбора длины шага в методе ньютона
+
+\includegraphics[width=0.6 \textwidth]{61.png}
+\includegraphics[width=0.6 \textwidth]{62.png}
+
+
+\includegraphics[width=0.6 \textwidth]{63.png}
+\includegraphics[width=0.6 \textwidth]{64.png}
+
 
 \end{document}

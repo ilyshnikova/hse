@@ -218,7 +218,6 @@ def gradient_descent(oracle, x_0, tolerance=1e-5, max_iter=10000,
 
 	return x_k, message, history
 
-
 def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
 			line_search_options=None, trace=False, display=False):
 	"""

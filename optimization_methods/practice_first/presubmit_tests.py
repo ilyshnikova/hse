@@ -78,6 +78,7 @@ def check_log_reg(oracle_type, sparse=False):
     d = np.ones(2)
     assert_almost_equal(logreg.func_directional(x, d, alpha=0.5),
                         0.7386407091095)
+
     assert_almost_equal(logreg.grad_directional(x, d, alpha=0.5),
                         0.4267589549159)
     assert_almost_equal(logreg.func_directional(x, d, alpha=1.0),
@@ -91,7 +92,7 @@ def test_log_reg_usual():
     check_log_reg('usual', sparse=True)
 
 
-@attr('bonus')
+#@attr('bonus')
 def test_log_reg_optimized():
     check_log_reg('optimized')
     check_log_reg('optimized', sparse=True)
@@ -201,7 +202,7 @@ def test_log_reg_oracle_calls():
     check_counters(counters, {'Ax': 8, 'ATx': 3, 'ATsA': 0})
 
 
-@attr('bonus')
+#@attr('bonus')
 def test_log_reg_optimized_oracle_calls():
 
     A = np.ones((2, 2))
@@ -212,6 +213,7 @@ def test_log_reg_optimized_oracle_calls():
 
     # Single func
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
+
     oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 0})
 
@@ -231,6 +233,7 @@ def test_log_reg_optimized_oracle_calls():
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
 
     # Single grad_directional
+
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
     oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
