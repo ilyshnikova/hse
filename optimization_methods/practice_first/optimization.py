@@ -271,50 +271,54 @@ def newton(oracle, x_0, tolerance=1e-5, max_iter=100,
 
 	history = defaultdict(list) if trace else None
 	line_search_tool = get_line_search_tool(line_search_options)
+
 	x_k = np.array(np.copy(x_0))
-	iter_number = 0
+
 	message = "success"
 	now = time.time()
 
-	if history is not None:
+	iter_n = 0
+
+	def save_hist(history, now, or_func, or_grad, x_k):
 		history['time'] += [time.time() - now]
-		history['func'] += [oracle.func(x_k)]
-		history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
+		history['func'] += [or_func]
+		history['grad_norm'] += [or_grad]
 		if x_k.size <= 2:
 			history['x'] += [np.copy(x_k)]
+
+	# debug info
+	if history is not None:
+		save_hist(history, now, oracle.func(x_k), np.linalg.norm(oracle.grad(x_k)), x_k)
 	if display:
 		print('x_k: {0}'.format(x_k))
 
 
 	while (np.linalg.norm(oracle.grad(x_k))**2 > tolerance * np.linalg.norm(oracle.grad(x_0))**2):
+		iter_n += 1
+
+		# erroros
 		if not np.isfinite(x_k.all()):
 			message = "computational_error"
 			break
-		iter_number += 1
-		if max_iter < iter_number:
+		if max_iter < iter_n:
 			message = "iterations_exceeded"
 			break
 
+		# direction
 		hess = oracle.hess(x_k)
-
 		try:
 			d_k = sp.linalg.cho_solve(sp.linalg.cho_factor(hess), -oracle.grad(x_k))
 		except np.linalg.linalg.LinAlgError:
 			message = "newton_direction_error"
 			break
+		# step
 		alpha = line_search_tool.line_search(oracle, x_k, d_k)
-
 		x_k += d_k * alpha
 
+		# debug info
 		if history is not None:
-			history['time'] += [time.time() - now]
-			history['func'] += [oracle.func(x_k)]
-			history['grad_norm'] += [np.linalg.norm(oracle.grad(x_k))]
-			if x_k.size <= 2:
-				history['x'].append(np.copy(x_k))
-#		if display:
-#			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
-
-
+			save_hist(history, now, oracle.func(x_k), np.linalg.norm(oracle.grad(x_k)), x_k)
+		if display:
+			print('time:', time.time() - now, ' func:', oracle.func(x_k), ' grad_norm:', np.linalg.norm(oracle.grad(x_k)), ' x:', x_k)
 
 	return x_k, message, history

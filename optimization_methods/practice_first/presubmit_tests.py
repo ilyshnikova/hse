@@ -16,6 +16,8 @@ import oracles
 def test_python3():
     ok_(sys.version_info > (3, 0))
 
+test_python3()
+
 
 def test_QuadraticOracle():
     # Quadratic function:
@@ -52,7 +54,7 @@ def test_QuadraticOracle():
                         0.0)
     assert_almost_equal(quadratic.grad_directional(x, d, alpha=1.0),
                         6.0)
-
+test_QuadraticOracle()
 
 def check_log_reg(oracle_type, sparse=False):
     # Simple data:
@@ -78,7 +80,6 @@ def check_log_reg(oracle_type, sparse=False):
     d = np.ones(2)
     assert_almost_equal(logreg.func_directional(x, d, alpha=0.5),
                         0.7386407091095)
-
     assert_almost_equal(logreg.grad_directional(x, d, alpha=0.5),
                         0.4267589549159)
     assert_almost_equal(logreg.func_directional(x, d, alpha=1.0),
@@ -90,13 +91,12 @@ def check_log_reg(oracle_type, sparse=False):
 def test_log_reg_usual():
     check_log_reg('usual')
     check_log_reg('usual', sparse=True)
+test_log_reg_usual()
 
-
-#@attr('bonus')
 def test_log_reg_optimized():
     check_log_reg('optimized')
     check_log_reg('optimized', sparse=True)
-
+test_log_reg_optimized()
 
 def get_counters(A):
     counters = {'Ax': 0, 'ATx': 0, 'ATsA': 0}
@@ -200,9 +200,8 @@ def test_log_reg_oracle_calls():
     oracle.func(x + 3 * d)
     oracle.grad(x + 3 * d)
     check_counters(counters, {'Ax': 8, 'ATx': 3, 'ATsA': 0})
+test_log_reg_oracle_calls()
 
-
-#@attr('bonus')
 def test_log_reg_optimized_oracle_calls():
 
     A = np.ones((2, 2))
@@ -213,7 +212,6 @@ def test_log_reg_optimized_oracle_calls():
 
     # Single func
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
-
     oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).func(x)
     check_counters(counters, {'Ax': 1, 'ATx': 0, 'ATsA': 0})
 
@@ -233,7 +231,6 @@ def test_log_reg_optimized_oracle_calls():
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
 
     # Single grad_directional
-
     (matvec_Ax, matvec_ATx, matmat_ATsA, counters) = get_counters(A)
     oracles.LogRegL2OptimizedOracle(matvec_Ax, matvec_ATx, matmat_ATsA, b, reg_coef).grad_directional(x, d, 1)
     check_counters(counters, {'Ax': 2, 'ATx': 0, 'ATsA': 0})
@@ -283,7 +280,7 @@ def test_log_reg_optimized_oracle_calls():
     oracle.func(x + 3 * d)
     oracle.grad(x + 3 * d)
     check_counters(counters, {'Ax': 2, 'ATx': 2, 'ATsA': 0})
-
+test_log_reg_optimized_oracle_calls()
 
 def test_grad_finite_diff_1():
     # Quadratic function.
@@ -293,7 +290,7 @@ def test_grad_finite_diff_1():
     g = oracles.grad_finite_diff(quadratic.func, np.zeros(3))
     ok_(isinstance(g, np.ndarray))
     ok_(np.allclose(g, -b))
-
+test_grad_finite_diff_1()
 
 def test_grad_finite_diff_2():
     # f(x, y) = x^3 + y^2
@@ -303,7 +300,7 @@ def test_grad_finite_diff_2():
     g = oracles.grad_finite_diff(func, x, eps)
     ok_(isinstance(g, np.ndarray))
     ok_(np.allclose(g, [12.0, 6.0], atol=1e-4))
-
+test_grad_finite_diff_2()
 
 def test_hess_finite_diff_1():
     # Quadratic function.
@@ -313,7 +310,7 @@ def test_hess_finite_diff_1():
     H = oracles.hess_finite_diff(quadratic.func, np.zeros(3))
     ok_(isinstance(H, np.ndarray))
     ok_(np.allclose(H, A))
-
+test_hess_finite_diff_1()
 
 def test_hess_finite_diff_2():
     # f(x, y) = x^3 + y^2
@@ -323,7 +320,7 @@ def test_hess_finite_diff_2():
     H = oracles.hess_finite_diff(func, x, eps)
     ok_(isinstance(H, np.ndarray))
     ok_(np.allclose(H, [[12.0, 0.], [0., 2.0]], atol=1e-3))
-
+test_hess_finite_diff_2()
 
 def get_quadratic():
     # Quadratic function:
@@ -361,7 +358,7 @@ def test_line_search():
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 16.0)
     ls_tool = optimization.LineSearchTool(method='Wolfe', c1=1e-4, c2=0.8)
     assert_almost_equal(ls_tool.line_search(oracle, x, d), 32.0)
-
+test_line_search()
 
 def check_equal_histories(history1, history2, atol=1e-3):
     if history1 is None or history2 is None:
@@ -447,12 +444,12 @@ def check_one_ideal_step(method):
 def test_gd_basic():
     check_prototype(optimization.gradient_descent)
     check_one_ideal_step(optimization.gradient_descent)
-
+test_gd_basic()
 
 def test_newton_basic():
     check_prototype(optimization.newton)
     check_one_ideal_step(optimization.newton)
-
+test_newton_basic()
 
 def get_1d(alpha):
     # 1D function:
@@ -525,7 +522,7 @@ def test_gd_1d():
     ok_(np.allclose(x_star, [-0.4084371], atol=1e-2))
     eq_(msg, 'iterations_exceeded')
     eq_(history, None)
-
+test_gd_1d()
 
 def test_newton_1d():
     oracle = get_1d(0.5)
@@ -561,7 +558,7 @@ def test_newton_1d():
     ok_(np.allclose(x_star, [-0.4077777], atol=1e-4))
     eq_(msg, 'success')
     check_equal_histories(history, TRUE_HISTORY)
-
+test_newton_1d()
 
 def test_newton_fail():
     # f(x) = integral_{-infty}^x arctan(t) dt
@@ -583,8 +580,4 @@ def test_newton_fail():
     warnings.filterwarnings("default")
     eq_(msg, 'newton_direction_error')
     eq_(history, None)
-
-print('run test')
-test_log_reg_optimized()
-print('finish test')
-
+test_newton_fail()

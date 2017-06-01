@@ -158,14 +158,7 @@ class LogRegL2OptimizedOracle(LogRegL2Oracle):
 		Av = self.b * (self.update_opt_x(x) + alpha * self.update_opt_d(d))
 		v = x + d * alpha
 
-#		return -(self.b * (scipy.special.expit(-self.b * next_ax))).dot(
-#		    self.matvec_Ax(d)
-#		    ) / self.b.size + self.regcoef * next_x.T.dot(d)
-
 		return  -(self.b * (scipy.special.expit(-Av))).dot(self.last_Ad) / self.b.size + self.regcoef * v.T.dot(d)
-#		return (-1.0 / self.b.shape[0]) * ((self.b * scipy.special.expit(-1 * self.b * Av))).dot(self.last_Ad) + self.regcoef * v.dot(d)
-#		return (1.0/self.b.shape[0]) * (scipy.special.expit(Av) * self.b) * self.matvec_Ax(d) + (self.regcoef * v).dot(d)
-#		return ((-1.0/self.b.shape[0]) * self.matvec_ATx(scipy.special.expit(Av) * self.b) + self.regcoef * v).dot(d)
 
 def create_log_reg_oracle(A, b, regcoef=None, oracle_type='usual'):
 	"""
