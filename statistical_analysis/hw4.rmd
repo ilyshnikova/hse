@@ -1,0 +1,348 @@
+---
+title: "Квартальные потребительские расходы"
+output: html_document
+---
+
+Дан график потребительских расходов в Австралии за период от 1989 до 1995 года по кварталам в единицах миллионов долларов. Требуется оценить дальнейшее поведение графика.
+
+Загружаем данные и визуалилируем их:
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+library(forecast)
+library(tseries)
+library(lmtest)
+library(Hmisc)
+data <- read.csv("quarterly-final-consumption-expe.csv", sep=",", stringsAsFactors=F)
+data$Value <- as.numeric(data$Value)
+time_series = ts(data$Value, start=c(1959, 4), frequency=4)
+plot(time_series, type="l", col="red")
+```
+
+Попробуем поделить данные на число дней в квартале с целью устранения шума
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+date_array = as.Date(as.yearqtr(c(data$Quarter, "1995Q4")))
+date_diffs = c()
+for (i in 1:length(date_array) - 1) {
+	cur_date = date_array[i]
+	next_date = date_array[i + 1]
+	date_diffs = c(date_diffs, as.numeric(next_date - cur_date))
+}
+plot(time_series / date_diffs, type="l", col="red")
+```
+
+Ничего не изменилось, поэтому будем рассматривать исходные данные, без деления.
+
+Построим STL-декомпозицию
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+plot(stl(time_series, s.window="periodic"))
+```
+
+Значения ошибок такие же больше по амплитуде, как и сезонность. Это вызвано тем, что дисперсия графика растет со временем, что хорошо видно на исходных данных. Чтобы исключить этот эффект, нужно применить преобразование Бокса-Кокса (и визуалилировать результат преобразования).
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+box_cox_lambda <- BoxCox.lambda(time_series)
+print(box_cox_lambda)
+box_cox_transformed_series = BoxCox(time_series, box_cox_lambda)
+plot(box_cox_transformed_series, ylab="box-cox transformed", xlab="", col="red")
+```
+
+Теперь дисперсия не увеличивается с изменением времени.
+
+##ARIMA
+###Ручной подбор модели
+
+Сделаем ручной подбор модели ARIMA, для этого нужно сначала проверить стационарность данных
+
+```{r, echo=TRUE, warning=TRUE, message=FALSE, fig.height=5.5, fig.width=10}
+print(kpss.test(box_cox_transformed_series)$p.value)
+```
+
+Получаем, что ряд нестационарен. Применим сезонное дифференцирование:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+diff_series = diff(box_cox_transformed_series, 4)
+plot(diff_series, type="l", col="red")
+```
+
+Проверим снова на стационарность:
+
+```{r, echo=TRUE, warning=TRUE, message=FALSE, fig.height=5.5, fig.width=10}
+print(kpss.test(diff_series)$p.value)
+```
+
+Конечно, p получилось больше 0.05, но все равно не сильно. На всякий случай лучше еще раз продифференцировать.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+double_diff_series = diff(diff_series, 1)
+plot(double_diff_series, type="l", col="red")
+```
+
+И снова проверяем стационарность. 
+
+```{r, echo=FALSE, warning=TRUE, message=FALSE, fig.height=5.5, fig.width=10}
+print(kpss.test(double_diff_series)$p.value)
+```
+
+На этот раз p большое, можно считать, что ряд стационарен.
+
+Построим ACF и PACF
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+par(mfrow=c(1,2))
+acf(double_diff_series, lag.max=5*4, main="")
+pacf(double_diff_series, lag.max=5*4, main="")
+par(mfrow=c(1,1))
+```
+
+Исходя из графиков, можно рассмотреть в качестве начального приближения модели ARIMA(1,1,1)(2,1,1)$_4$. Рассмотрим несколько близких к ней моделей и посчитаем AICc для каждой:
+
+Модель                     | AICc
+-------------------------- | ------------
+ARIMA(1,1,1)(2,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(2,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(0,1,1)(2,1,1)$_{4}$ | `r Arima(time_series, order=c(0,1,1), seasonal=c(2,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,0)(2,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,0), seasonal=c(2,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(2,1,0)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(2,1,0), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(1,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(1,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,2)(2,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,2), seasonal=c(2,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(2,1,2)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(2,1,2), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(3,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(3,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(0,1,0)(2,1,1)$_{4}$ | `r Arima(time_series, order=c(0,1,0), seasonal=c(2,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(1,1,0)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(1,1,0), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,0)(1,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,0), seasonal=c(1,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(0,1,1)(1,1,1)$_{4}$ | `r Arima(time_series, order=c(0,1,1), seasonal=c(1,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(0,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(0,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(2,1,1)(0,1,1)$_{4}$ | `r Arima(time_series, order=c(2,1,1), seasonal=c(0,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,2)(0,1,1)$_{4}$ | `r Arima(time_series, order=c(1,1,2), seasonal=c(0,1,1), lambda=box_cox_lambda)$aicc`
+ARIMA(1,1,1)(0,1,2)$_{4}$ | `r Arima(time_series, order=c(1,1,1), seasonal=c(0,1,2), lambda=box_cox_lambda)$aicc`
+
+Самая лучшая модель -- ARIMA(1,1,1)(0,1,1)$_4$
+
+Построим графики остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+model = Arima(time_series, order=c(1,1,1), seasonal=c(0,1,1), lambda=box_cox_lambda)
+res = residuals(model)
+res = res[-c(1:5)]
+tsdisplay(res)
+```
+
+Построим достигаемые уровни значимости критерия Льюнга-Бокса для остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+p <- rep(0, 1, frequency(time_series)*3)
+for (i in 1:length(p)){
+  p[i] <- Box.test(res, lag=i, type = "Ljung-Box")$p.value
+}
+plot(p, xlab="Lag", ylab="P-value", ylim=c(0,1))
+abline(h = 0.05, lty = 2, col = "blue")
+```
+
+Тут все хорошо, теперь построим QQ-график и гистограмму остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+par(mfrow=c(1,2))
+qqnorm(res)
+qqline(res, col="red")
+hist(res)
+par(mfrow=c(1,1))
+```
+
+Остатки похожи на нормальные. Но это, вместе со стационарностью и несмещенностью можно проверить с помощью критериев:
+
+
+Гипотеза           | Критерий      | Результат проверки | Достигаемый уровень значимости
+------------------ | ------------- | ------------------ | ------------------------------
+Нормальность       | Шапиро-Уилка  | не отвергается        | `r shapiro.test(res)$p.value`
+Несмещённость      | Уилкоксона    | не отвергается     | `r wilcox.test(res)$p.value`
+Стационарность     | KPSS          | не отвергается     | `r kpss.test(res)$p.value`
+
+Разобъем нашу выборку на обучающую и тестовую и посмотрим результат работы прогнозатора:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+train_series = window(time_series, end=c(1990,4))
+test_series = window(time_series, start=c(1991,1))
+train_model = Arima(train_series, order=c(1,1,1), seasonal=c(0,1,1), lambda=box_cox_lambda)
+fc = forecast(train_model, h = length(test_series))
+print(accuracy(fc, test_series))
+plot(fc, xlab="Time")
+lines(time_series, col="red")
+```
+
+Хороший результат.
+
+###Автоматическая модель ARIMA
+
+Обучаем автоматическую ARIMA и строим графики остатков
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+auto_arima = auto.arima(time_series, lambda=box_cox_lambda)
+print(auto_arima)
+res = residuals(auto_arima)
+res = res[-c(1:5)]
+tsdisplay(res)
+```
+
+AICc слегка лучше, чем в ручной модели.
+
+Построим достигаемые уровни значимости критерия Льюнга-Бокса для остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+p <- rep(0, 1, frequency(time_series)*3)
+for (i in 1:length(p)){
+  p[i] <- Box.test(res, lag=i, type = "Ljung-Box")$p.value
+}
+plot(p, xlab="Lag", ylab="P-value", ylim=c(0,1))
+abline(h = 0.05, lty = 2, col = "blue")
+```
+
+Тут все хорошо. Построим QQ-график и гистограмму остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+par(mfrow=c(1,2))
+qqnorm(res)
+qqline(res, col="red")
+hist(res)
+par(mfrow=c(1,1))
+```
+
+Остатки похожи на нормальные. Проверим нормальность, несмещенность и стационарность критериями:
+
+Гипотеза           | Критерий      | Результат проверки | Достигаемый уровень значимости
+------------------ | ------------- | ------------------ | ------------------------------
+Нормальность       | Шапиро-Уилка  | не отвергается        | `r shapiro.test(res)$p.value`
+Несмещённость      | Уилкоксона    | не отвергается     | `r wilcox.test(res)$p.value`
+Стационарность     | KPSS          | не отвергается     | `r kpss.test(res)$p.value`
+
+Все хорошо. 
+
+Разобъем выборку на обучающую и тестовую и посмотрим качество прогноза
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+train_series = window(time_series, end=c(1990,4))
+test_series = window(time_series, start=c(1991,1))
+train_model = Arima(train_series, order=c(1,1,1), seasonal=c(0,1,1), lambda=box_cox_lambda)
+fc = forecast(train_model, h = length(test_series))
+print(accuracy(fc, test_series))
+plot(fc, xlab="Time")
+lines(time_series, col="red")
+```
+
+Прогноз хороший.
+
+### Сравнение ручной аримы и автоматической
+
+Для ставнения двух полученных моделей сначала построим взаимный график их остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+res      = (time_series - fitted(model))[-c(1:5)]
+res.auto = (time_series - fitted(auto_arima))[-c(1:5)]
+
+plot(res, res.auto, xlim=c(min(res, res.auto), max(res, res.auto)), ylim=c(min(res, res.auto), max(res, res.auto)),
+     xlab = "Residuals of manually found model", ylab="Residuals of auto.arima model")
+grid()
+lines(c(min(res, res.auto), max(res, res.auto))*2, c(min(res, res.auto), max(res, res.auto))*2, col="red")
+```
+
+Теперь прогоним критерий Диболда-Мариано
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+print(dm.test(res, res.auto))
+```
+
+Критерий не говорит нам о том, что одна модель существенно лучше другой. Но, посмотря на AICc, на нормальность гистограмм остатков, видим, что все-таки автоматическая модель лучше. 
+
+##Прогноз ETS
+
+Построим прогноз ETS
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+ets_model = ets(time_series, lambda=box_cox_lambda)
+print(ets_model)
+```
+
+Посмотрим на остатки:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+ets_res = residuals(ets_model)
+ets_res = ets_res[-c(1:5)]
+tsdisplay(ets_res)
+```
+
+Построим достигаемые уровни значимости критерия Льюнга-Бокса для остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+p <- rep(0, 1, frequency(time_series)*3)
+for (i in 1:length(p)){
+  p[i] <- Box.test(ets_res, lag=i, type = "Ljung-Box")$p.value
+}
+plot(p, xlab="Lag", ylab="P-value", ylim=c(0,1))
+abline(h = 0.05, lty = 2, col = "blue")
+```
+
+Картина выгядит хуже, чем для аримы, но приемлима.
+
+Построим QQ-график и гистограмму остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+par(mfrow=c(1,2))
+qqnorm(ets_res)
+qqline(ets_res, col="red")
+hist(ets_res)
+par(mfrow=c(1,1))
+```
+
+Остатки выглядят нормальными. Проверим нормальность, несмещенность и стационарность критериями:
+
+Гипотеза           | Критерий      | Результат проверки | Достигаемый уровень значимости
+------------------ | ------------- | ------------------ | ------------------------------
+Нормальность       | Шапиро-Уилка  | не отвергается        | `r shapiro.test(ets_res)$p.value`
+Несмещённость      | Уилкоксона    | не отвергается     | `r wilcox.test(ets_res)$p.value`
+Стационарность     | KPSS          | не отвергается     | `r kpss.test(ets_res)$p.value`
+
+Все хорошо.
+
+Попробуем разбить временной ряд на обучающий и тестовый и посмотреть качество прогноза
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+train_series = window(time_series, end=c(1990,4))
+test_series = window(time_series, start=c(1991,1))
+train_model = ets(train_series, lambda=box_cox_lambda)
+fc = forecast(train_model, h = length(test_series))
+print(accuracy(fc, test_series))
+plot(fc, xlab="Time")
+lines(time_series, col="red")
+```
+
+Хороший прогноз.
+
+##Сравнение ETS и Arima
+
+Сначала построим взаимный график остатков
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+res.ets = (time_series - fitted(ets_model))[-c(1:5)]
+
+plot(res.auto, res.ets, xlim=c(min(res.auto, res.ets), max(res.auto, res.ets)), ylim=c(min(res.auto, res.ets), max(res.auto, res.ets)),
+     xlab = "Residuals of auto erima", ylab="Residuals of ETS")
+grid()
+lines(c(min(res.auto, res.ets), max(res.auto, res.ets))*2, c(min(res.auto, res.ets), max(res.auto, res.ets))*2, col="red")
+```
+
+Теперь попытаемся прогнать критерий Диболда-Мариано
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+print(dm.test(res.auto, res.ets))
+```
+
+Он не обнаруживает качественных отличий, однако, достигаемые уровни значимости критерия Льюнга-Бокса для остатков были лучше у аримы, и показатель AICc тоже. И, наконец, при разбиении на обучающую и тестовую временную серию, арима дала лучший результат. 
+
+Поэтому выбираем в качестве лучшей модели автоматическую ариму. 
+
+##Прогнозирование
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=5.5, fig.width=10}
+fl = forecast(auto_arima, h=30, bootstrap=TRUE)
+print(fl)
+plot(fl, xlab="Quarter", col="red")
+```
+
