@@ -84,8 +84,8 @@ if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
-if [ -d "$HOME/arc/trunk/arcadia/devtools/ya" ] ; then
-    PATH="$HOME/arc/trunk/arcadia/devtools/ya:$PATH"
+if [ -d "$HOME/arc/trunk/arcadia" ] ; then
+    PATH="$HOME/arc/trunk/arcadia:$PATH"
 fi
 
 if [ -d "$HOME/arc/trunk/arcadia/devtools/codesearch/scripts" ] ; then
