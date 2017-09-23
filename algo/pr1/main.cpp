@@ -72,19 +72,23 @@ public:
         std::mt19937 gen{ std::random_device()() };
         std::uniform_int_distribution<> dis(0, 255);
         std::generate_n(Buf, BlockSize, [&]{ return dis(gen); });
-        Buf[BlockSize - 1] = '\n';
+        Buf[BlockSize - 1] = '\0';
     }
 
     void Action() const {
 //        std::cout << "Action" << std::endl;
         // что если перенести открытие и закрытие в конструктор и дестркутор?
+//        FILE* f = fopen("file.txt","w");
+//        fwrite (Buf, sizeof(char), sizeof(Buf), f);
+
         int fd = open("file", O_DIRECT | O_SYNC);
         write(fd, Buf, BlockSize);
+        fsync(fd);
         close(fd);
     }
 
     ~TSeqWriterProfiler() {
-        delete Buf;
+        delete[] Buf;
     }
 
 };
