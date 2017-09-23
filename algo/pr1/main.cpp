@@ -17,15 +17,18 @@ class TProfiler {
 protected:
     size_t IterationNumber;
     size_t ActionsNumber;
+    const size_t BlockSize;
 public:
     TProfiler()
-        : IterationNumber(1000)
+        : IterationNumber(100)
         , ActionsNumber(1024)
+        , BlockSize(1024)
     {}
 
     TProfiler(const size_t iterationNumber, const size_t actionsNumber)
         : IterationNumber(iterationNumber)
         , ActionsNumber(actionsNumber)
+        , BlockSize(1024)
     {}
 
     virtual void Action() const = 0;
@@ -33,6 +36,9 @@ public:
     double Lanch() const {
         double resultTime = 0;
         for (size_t i = 0; i < ActionsNumber; ++i) {
+//            if (!(i % 300)) {
+//                std::cout << "iteration:" << i << std::endl;
+//            }
             std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
             Action();
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -51,6 +57,9 @@ public:
         double var = std::accumulate(results.begin(), results.end(), 0.0,
                                                         [&](double a, double b) { return a + (b - mean) * (b - mean) / IterationNumber; });
 
+        std::cout << "mean: " << mean << " " << BlockSize << " bytes " << ActionsNumber << " times repeated " << IterationNumber << " times" << std::endl;
+        std::cout << "speed: " << static_cast<double>(BlockSize * ActionsNumber) / 1024 / 1024 / (mean / 1000 / 1000) << std::endl;
+
         return {mean, std::sqrt(var)};
     }
 
@@ -59,14 +68,14 @@ public:
 
 class TSeqWriterProfiler : public TProfiler {
 private:
-    const size_t BlockSize;
     char* Buf;
+    int fd;
 public:
 
     TSeqWriterProfiler()
         : TProfiler()
-        , BlockSize(1024 * 1024)
         , Buf(new char[BlockSize])
+        , fd(open("file", /*O_DIRECT |*/  O_SYNC | O_WRONLY | O_TRUNC))
     {
 
         std::mt19937 gen{ std::random_device()() };
@@ -81,14 +90,18 @@ public:
 //        FILE* f = fopen("file.txt","w");
 //        fwrite (Buf, sizeof(char), sizeof(Buf), f);
 
-        int fd = open("file", O_DIRECT | O_SYNC);
-        write(fd, Buf, BlockSize);
+//        int fd = open("file", /*O_DIRECT |*/  O_SYNC | O_WRONLY | O_TRUNC);
+        if (write(fd, Buf, TProfiler::BlockSize) == -1) {
+            std::cout << "write error" << std::endl;
+        }
         fsync(fd);
-        close(fd);
+//        fdatasync(fd);
+//        close(fd);
     }
 
     ~TSeqWriterProfiler() {
         delete[] Buf;
+        close(fd);
     }
 
 };
@@ -138,3 +151,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
