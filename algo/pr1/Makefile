@@ -1,10 +1,10 @@
 all: run
 
 build:
-	 g++ main.cpp -O2 -std=c++0x -o main
+	 g++ main.cpp -O2 -std=c++0x -g -o main
 
 run: build
-	 timeout 2m ./main seq-read
+	 ./main && rm file
 	 # timeout 2m ./main seq-write
 	 # # timeout 30s ./main rnd-read
 	 # # timeout 30s ./main rnd-write

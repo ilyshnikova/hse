@@ -12,23 +12,29 @@
 #include <ctime>
 #include <chrono>
 #include <sys/ioctl.h>
-#include <sys/disk.h>
+#include <linux/fs.h>
 
-void seq_write(const size_t blockSize = 1/*in MiB*/, const size_t count=100) {
+const char* tmp_file_name = "_tmp_file_";
+
+/*
+ nastyats@bs-dev12:~$ sudo fdisk -l | grep "Sector size"
+ Sector size (logical/physical): 512 bytes / 4096 bytes
+ */
+void seq_write(const size_t blockSize = 1/*in MiB*/, const size_t count=2 * 1024) {
     // open fd
-    int fd = open("file", O_RDWR | O_CREAT | O_SYNC, 0644);
+    int fd = open(tmp_file_name, O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, 0644);
 
     // create buffer with random data
-    char* buffer = new char[blockSize];
+    char* buffer = new char[blockSize * 1024 * 1024];
     std::mt19937 gen{ std::random_device()() };
     std::uniform_int_distribution<> dis(0, 255);
     std::generate_n(buffer, blockSize * 1024 * 1024, [&]{ return dis(gen); });
     buffer[blockSize * 1024 * 1024 - 1] = '\0';
 
+    lseek(fd, 0, SEEK_SET);
+
     // start timer
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-
-//    lseek(fd, 0, SEEK_END);
 
     for (size_t i = 0; i < count; ++i) {
         write(fd, buffer, blockSize * 1024 * 1024);
@@ -39,7 +45,6 @@ void seq_write(const size_t blockSize = 1/*in MiB*/, const size_t count=100) {
     // compute time
     double time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
-    // finalize
     delete[] buffer;
     close(fd);
 
@@ -47,8 +52,64 @@ void seq_write(const size_t blockSize = 1/*in MiB*/, const size_t count=100) {
     std::cout << "speed: " << 1. * blockSize * count / time * 1000 * 1000 << std::endl;
 }
 
+void create_file(const size_t blockSize /*in MiB*/, const size_t count, const std::string& name) {
+    int fd = open(tmp_file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
+    // create buffer with random data
+    char* buffer = new char[blockSize * 1024 * 1024];
+    std::mt19937 gen{ std::random_device()() };
+    std::uniform_int_distribution<> dis(0, 255);
+    std::generate_n(buffer, blockSize * 1024 * 1024, [&]{ return dis(gen); });
+    buffer[blockSize * 1024 * 1024 - 1] = '\0';
 
+    for (size_t i = 0; i < count; ++i) {
+        write(fd, buffer, blockSize * 1024 * 1024);
+        fsync(fd);
+        fdatasync(fd);
+    }
+
+    delete[] buffer;
+
+    close(fd);
+}
+
+void seq_read(const size_t blockSize = 1/*in MiB default value 1KiB*/, const size_t count=2 * 1024) {
+    std::cout << "start ot create file" << std::endl;
+    create_file(blockSize, count, tmp_file_name);
+    std::cout << "finish" << std::endl;
+    int fd = open(tmp_file_name, O_RDONLY);
+    std::cout << "fd: " << fd << std::endl;
+
+    if (posix_fadvise(fd, 0, blockSize * 1024 * 1024 * count, POSIX_FADV_DONTNEED) == -1) {
+        std::cout << "could not flush the cache" << std::endl;
+    }
+
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    char* buf = new char[blockSize * 1024 * 1024];
+    for (size_t i = 0; i < count; ++i) {
+        if (read(fd, buf, blockSize * 1024 * 1024) < 0) {
+            std::cout << "read error" << std::endl;
+        }
+    }
+
+    // finish timer
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    // compute time
+    double time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+    std::cout << "speed: " << 1. * blockSize * count / time * 1000 * 1000 << std::endl;
+
+    buf[blockSize * 1024 * 1024 - 1] = '\0';
+
+    delete[] buf;
+}
+
+//
+//void rnd_write(const size_t blockSize = 1/*in KiB default value 1KiB*/, const size_t count=2 * 1024) {
+//    std::cout << "start ot create file" << std::endl;
+//    create_file(blockSize, count, tmp_file_name);
+//    std::cout << "finish" << std::endl;
+//    int fd = open(tmp_file_name, O_RDONLY);
+//}
 
 
 class TProfiler {
@@ -56,36 +117,20 @@ protected:
     size_t IterationNumber;
     size_t BlockSize;
     int fd;
-    char* Buffer;
 public:
     TProfiler(const char mode, const size_t blockSize = 1/*MiB*/)
         : IterationNumber(100)
         , BlockSize(blockSize * 1024 * 1024)
-        , Buffer(nullptr)
-    {
-        if (mode == 'w') {
-            fd = open("file", O_RDWR | O_CREAT | O_SYNC, 0644);
-            Buffer = new char[BlockSize];
-            std::mt19937 gen{ std::random_device()() };
-            std::uniform_int_distribution<> dis(0, 255);
-            std::generate_n(Buffer, BlockSize, [&]{ return dis(gen); });
-            Buffer[BlockSize - 1] = '\0';
-
-            // for linux
-            // fd = open(name, O_RDWR | O_CREAT | O_SYNC | O_DIRECT, 0644);
-        } else if (mode == 'r') {
-            fd = open("file", O_RDONLY);
-        }
-    }
+    {}
 
     TProfiler(const size_t iterationNumber, const size_t actionsNumber)
         : IterationNumber(iterationNumber)
         , BlockSize(1024)
+//        , fd(InitFd())
     {}
 
+//    virtual InitFd() = 0;
     virtual void Action() = 0;
-
-    virtual void Stop() {};
 
     double Lanch()  {
         double resultTime = 0;
@@ -108,14 +153,14 @@ public:
         std::cout << "mean: " << mean << " " << BlockSize << " bytes "  << IterationNumber << " times" << std::endl;
         std::cout << "speed: " << static_cast<double>(BlockSize) / 1024 / 1024 / (mean / 1000 / 1000) << std::endl;
 
-        return {mean, std::sqrt(var)};
+        return std::make_tuple(mean, std::sqrt(var));
     }
 
     virtual ~TProfiler() {
-        if (Buffer != nullptr) {
-            delete[] Buffer;
-        }
-        close(fd);
+//        if (Buffer != nullptr) {
+//            delete[] Buffer;
+//        }
+//        close(fd);
     }
 };
 
@@ -139,18 +184,11 @@ public:
 
 };
 
-void create_file(const size_t mb_size) {
-    std::mt19937 gen{ std::random_device()() };
-    std::uniform_int_distribution<> dis(0, 255);
-    std::ofstream file("text_file.txt");
-    std::generate_n(std::ostream_iterator<char>(file, ""), mb_size * 1024 * 1024, [&]{ return dis(gen); });
-    file.close();
-}
-
 int main(int argc, char** argv) {
     //create_file(1); // create 1MB file
-
     seq_write();
+
+    seq_read();
 
 //    TSeqWriterProfiler profiler;
 //    double mean, var;
