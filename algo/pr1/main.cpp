@@ -12,43 +12,91 @@
 #include <ctime>
 #include <chrono>
 #include <sys/ioctl.h>
+#include <sys/disk.h>
+
+void seq_write(const size_t blockSize = 1/*in MiB*/, const size_t count=100) {
+    // open fd
+    int fd = open("file", O_RDWR | O_CREAT | O_SYNC, 0644);
+
+    // create buffer with random data
+    char* buffer = new char[blockSize];
+    std::mt19937 gen{ std::random_device()() };
+    std::uniform_int_distribution<> dis(0, 255);
+    std::generate_n(buffer, blockSize * 1024 * 1024, [&]{ return dis(gen); });
+    buffer[blockSize * 1024 * 1024 - 1] = '\0';
+
+    // start timer
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
+//    lseek(fd, 0, SEEK_END);
+
+    for (size_t i = 0; i < count; ++i) {
+        write(fd, buffer, blockSize * 1024 * 1024);
+    }
+
+    // finish timer
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    // compute time
+    double time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+
+    // finalize
+    delete[] buffer;
+    close(fd);
+
+    // print results
+    std::cout << "speed: " << 1. * blockSize * count / time * 1000 * 1000 << std::endl;
+}
+
+
+
+
 
 class TProfiler {
 protected:
     size_t IterationNumber;
-    size_t ActionsNumber;
-    const size_t BlockSize;
+    size_t BlockSize;
+    int fd;
+    char* Buffer;
 public:
-    TProfiler()
+    TProfiler(const char mode, const size_t blockSize = 1/*MiB*/)
         : IterationNumber(100)
-        , ActionsNumber(1024)
-        , BlockSize(1024)
-    {}
+        , BlockSize(blockSize * 1024 * 1024)
+        , Buffer(nullptr)
+    {
+        if (mode == 'w') {
+            fd = open("file", O_RDWR | O_CREAT | O_SYNC, 0644);
+            Buffer = new char[BlockSize];
+            std::mt19937 gen{ std::random_device()() };
+            std::uniform_int_distribution<> dis(0, 255);
+            std::generate_n(Buffer, BlockSize, [&]{ return dis(gen); });
+            Buffer[BlockSize - 1] = '\0';
+
+            // for linux
+            // fd = open(name, O_RDWR | O_CREAT | O_SYNC | O_DIRECT, 0644);
+        } else if (mode == 'r') {
+            fd = open("file", O_RDONLY);
+        }
+    }
 
     TProfiler(const size_t iterationNumber, const size_t actionsNumber)
         : IterationNumber(iterationNumber)
-        , ActionsNumber(actionsNumber)
         , BlockSize(1024)
     {}
 
-    virtual void Action() const = 0;
+    virtual void Action() = 0;
 
-    double Lanch() const {
+    virtual void Stop() {};
+
+    double Lanch()  {
         double resultTime = 0;
-        for (size_t i = 0; i < ActionsNumber; ++i) {
-//            if (!(i % 300)) {
-//                std::cout << "iteration:" << i << std::endl;
-//            }
-            std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-            Action();
-            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            resultTime += static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
-        }
-        return resultTime;
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+        Action();
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        return  static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
     }
 
-    std::tuple<double, double> Compute() const {
-        std::vector<int> results(IterationNumber);
+    std::tuple<double, double> Compute() {
+        std::vector<double> results(IterationNumber);
         std::generate_n(results.begin(), IterationNumber, [&]{ return Lanch(); });
 
         double mean = std::accumulate(results.begin(), results.end(), 0.0,
@@ -57,46 +105,31 @@ public:
         double var = std::accumulate(results.begin(), results.end(), 0.0,
                                                         [&](double a, double b) { return a + (b - mean) * (b - mean) / IterationNumber; });
 
-        std::cout << "mean: " << mean << " " << BlockSize << " bytes " << ActionsNumber << " times repeated " << IterationNumber << " times" << std::endl;
-        std::cout << "speed: " << static_cast<double>(BlockSize * ActionsNumber) / 1024 / 1024 / (mean / 1000 / 1000) << std::endl;
+        std::cout << "mean: " << mean << " " << BlockSize << " bytes "  << IterationNumber << " times" << std::endl;
+        std::cout << "speed: " << static_cast<double>(BlockSize) / 1024 / 1024 / (mean / 1000 / 1000) << std::endl;
 
         return {mean, std::sqrt(var)};
     }
 
-    virtual ~TProfiler() {}
+    virtual ~TProfiler() {
+        if (Buffer != nullptr) {
+            delete[] Buffer;
+        }
+        close(fd);
+    }
 };
 
 class TSeqWriterProfiler : public TProfiler {
 private:
     char* Buf;
-    int fd;
 public:
 
     TSeqWriterProfiler()
-        : TProfiler()
-        , Buf(new char[BlockSize])
-        , fd(open("file", /*O_DIRECT |*/  O_SYNC | O_WRONLY | O_TRUNC))
-    {
+        : TProfiler('w')
+    {}
 
-        std::mt19937 gen{ std::random_device()() };
-        std::uniform_int_distribution<> dis(0, 255);
-        std::generate_n(Buf, BlockSize, [&]{ return dis(gen); });
-        Buf[BlockSize - 1] = '\0';
-    }
-
-    void Action() const {
-//        std::cout << "Action" << std::endl;
-        // что если перенести открытие и закрытие в конструктор и дестркутор?
-//        FILE* f = fopen("file.txt","w");
-//        fwrite (Buf, sizeof(char), sizeof(Buf), f);
-
-//        int fd = open("file", /*O_DIRECT |*/  O_SYNC | O_WRONLY | O_TRUNC);
-        if (write(fd, Buf, TProfiler::BlockSize) == -1) {
-            std::cout << "write error" << std::endl;
-        }
-        fsync(fd);
-//        fdatasync(fd);
-//        close(fd);
+    void Action() {
+        lseek(fd, 0, SEEK_END);
     }
 
     ~TSeqWriterProfiler() {
@@ -117,12 +150,14 @@ void create_file(const size_t mb_size) {
 int main(int argc, char** argv) {
     //create_file(1); // create 1MB file
 
-    TSeqWriterProfiler profiler;
-    double mean, var;
+    seq_write();
 
-    std::tie(mean, var) = profiler.Compute();
-    std::cout << mean << " " << var << std::endl;
-    std::cout << 1. / mean  * 1000 * 1000 * 1024 << std::endl;
+//    TSeqWriterProfiler profiler;
+//    double mean, var;
+//
+//    std::tie(mean, var) = profiler.Compute();
+//    std::cout << mean << " " << var << std::endl;
+//    std::cout << 1. / mean  * 1000 * 1000 * 1024 << std::endl;
 
 //    if (argc < 2) {
 //        std::cerr << "Incorrect number of arguments: " << argc << ", expected >=2" << std::endl;
