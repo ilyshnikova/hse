@@ -1,13 +1,13 @@
 all: run
 
 build:
-	 g++ main.cpp -O2 -std=c++0x -g -o main
+	 g++ main.cpp -O2 -std=c++1z -pthread -g -o main
 
 run: build
-	 ./main && rm file
-	 # timeout 2m ./main seq-write
-	 # # timeout 30s ./main rnd-read
-	 # # timeout 30s ./main rnd-write
-	 # # timeout 2m ./main rnd-read-parallel
-	 # # timeout 2m ./main rnd-write-parallel
-	 # # timeout 2m ./main rnd-mixed-parallel
+	 ./main seq-read && rm _tmp_file_
+	 ./main seq-write && rm _tmp_file_
+	 ./main rnd-read && rm _tmp_file_
+	 ./main rnd-write && rm _tmp_file_
+	 ./main rnd-read-parallel && rm _tmp_file_*
+	 ./main rnd-write-parallel && rm _tmp_file_*
+	 ./main rnd-mixed-parallel && rm _tmp_file_*
