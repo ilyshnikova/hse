@@ -7,6 +7,8 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <algorithm>
+
 unsigned debug_flag;
 
 void sleep(unsigned milliseconds) {
@@ -44,7 +46,8 @@ public:
     Philosopher(
         unsigned id,
         Fork* fork_left, Fork* fork_right,
-        unsigned think_delay, unsigned eat_delay
+        unsigned think_delay, unsigned eat_delay,
+        unsigned* eat_count, unsigned* left_eat_count, unsigned* right_eat_count
 	)
 		: id(id)
 		, fork_left(fork_left)
@@ -52,7 +55,11 @@ public:
         , r_engine(std::random_device()())
         , think_delay_dist(0, think_delay)
         , eat_delay_dist(0, eat_delay)
-        , eat_count(0), wait_time(0), stop_flag(false)
+        , eat_count(eat_count)
+        , wait_time(0)
+        , stop_flag(false)
+        , left_eat_count(left_eat_count)
+        , right_eat_count(right_eat_count)
 	{}
 
 	void log_fork_action(const std::string& fork_type, const std::string& action) {
@@ -71,14 +78,15 @@ public:
 
             // Lehmann-Rabin
 			bool finish = false;
-			std::uniform_int_distribution<int> distribution(0, 1);
 
             while (!finish) {
                 Fork* first_fork;
                 Fork* second_fork;
     			std::string first_fork_type, second_fork_type;
+			    std::uniform_int_distribution<int> distribution(0, std::abs(*left_eat_count - *right_eat_count));
+                int random = distribution(generator);
 
-    			if (distribution(generator) % 2) {
+    			if (*left_eat_count < *right_eat_count && ) {
 	    			first_fork_type = "right";
                     first_fork = fork_right;
 
@@ -115,7 +123,7 @@ public:
     }
 
     void printStats() const {
-        std::printf("[%u] %u %lld\n", id, eat_count, wait_time);
+        std::printf("[%u] %u %lld\n", id, *eat_count, wait_time);
     }
 
 private:
@@ -131,7 +139,7 @@ private:
             Clock::now() - wait_start).count();
         if (debug_flag) std::printf("[%u] eating\n", id);
         sleep(eat_delay_dist(r_engine));
-        ++eat_count;
+        ++(*eat_count);
     }
 
     unsigned id;
@@ -140,11 +148,15 @@ private:
     std::default_random_engine r_engine;
     std::uniform_int_distribution<unsigned> think_delay_dist;
     std::uniform_int_distribution<unsigned> eat_delay_dist;
-    unsigned eat_count;
+    unsigned* eat_count;
     long long wait_time;
     Time wait_start;
     std::atomic<bool> stop_flag;
 	std::mt19937 generator;
+
+    int* left_count;
+    int* right_count;
+    int* count;
 };
 
 int main(int argc, char* argv[]) {
@@ -165,11 +177,13 @@ int main(int argc, char* argv[]) {
 
     // we use deques to avoid defining copy/move constructors
     std::deque<Fork> forks(N);
+    std::vector<unsigned> eat_counts(N, 0);
+
 	std::deque<Philosopher> phils;
     for (unsigned i = 0; i < N; ++i) {
         phils.emplace_back(i + 1,
             &forks[(i + 1) % N], &forks[i],
-            think_delay, eat_delay);
+            think_delay, eat_delay, &eat_counts[i], &eat_counts[(i + 1) % N], &eat_counts[(i - 1) % N]);
     }
 
     std::vector<std::thread> threads;
